@@ -1,0 +1,12 @@
+.venv/
+.vscode/
+__pycache__/
+.ipynb_checkpoints/
+
+#data
+
+data/*.csv
+data/*.parquet
+data/*.db
+data/*.sqlite
+data/*.sqlite3
