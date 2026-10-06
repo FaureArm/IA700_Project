@@ -5,13 +5,18 @@ Depuis la racine du dépôt :
 """
 
 from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+
+from ia700_project.sidebar import date_itinerary_sidebar
+from ia700_project.dashboards import render_dashboard
 
 
 # TODO: separate main streamlit functionalities into different files (eg: sidebar, title, graphs, cols, etc)
 # TODO: add dataclasses to simplify returns of recurring features, ex: filter selection,
 # TODO: create classes to  handle the different datasets/representations
+# TODO: change all comments and descriptions to english
 
 DATA_PATH = (
     Path(__file__).resolve().parents[2] / "data" / "regularite-mensuelle-tgv-aqst.csv"
@@ -59,61 +64,6 @@ def load_data(path: str, modified_at: int) -> tuple[pd.DataFrame, int]:
     return df.loc[valid].copy(), int((~valid).sum())
 
 
-def monthly_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrège les annulations et pondère le retard par les trains ayant circulé."""
-    prepared = df.assign(
-        circulated=df[PLANNED] - df[CANCELLED],
-        delay_minutes=df[DELAY] * (df[PLANNED] - df[CANCELLED]),
-    )
-    monthly = (
-        prepared.groupby("Date")[[PLANNED, CANCELLED, "circulated", "delay_minutes"]]
-        .sum()
-        .sort_index()
-    )
-    monthly["Retard moyen à l'arrivée (min)"] = monthly["delay_minutes"] / monthly[
-        "circulated"
-    ].replace(0, float("nan"))
-    monthly["Taux d'annulation (%)"] = monthly[CANCELLED] / monthly[PLANNED] * 100
-    return monthly
-
-
-def sidebar(df: pd.DataFrame) -> pd.DataFrame:
-    ### Sidebar ###
-    st.sidebar.header("Votre sélection")
-    months = sorted(df["Date"].dt.strftime("%Y-%m").unique().tolist())
-    if len(months) > 1:
-        start, end = st.sidebar.select_slider(
-            "Période", options=months, value=(months[0], months[-1]), key="period"
-        )
-    else:
-        start = end = months[0]
-        st.sidebar.caption(f"Période disponible : {start}")
-    month_values = df["Date"].dt.strftime(
-        "%Y-%m"
-    )  # cut days from format since we only have months
-    filtered = df.loc[month_values.between(start, end)].copy()
-
-    departure = st.sidebar.selectbox(
-        "Gare de départ",
-        [ALL_STATIONS] + sorted(filtered[DEPARTURE].unique().tolist()),
-        key="departure",
-    )
-    if departure != ALL_STATIONS:
-        filtered = filtered.loc[filtered[DEPARTURE].eq(departure)]
-    arrival = st.sidebar.selectbox(
-        "Gare d'arrivée",
-        [ALL_STATIONS] + sorted(filtered[ARRIVAL].unique().tolist()),
-        key="arrival",
-    )
-    if arrival != ALL_STATIONS:
-        filtered = filtered.loc[filtered[ARRIVAL].eq(arrival)]
-
-    if filtered.empty:
-        st.info("Aucune donnée disponible pour cette sélection.")
-        st.stop()
-    return filtered, start, end
-
-
 def main() -> None:
     """Affiche les filtres, les indicateurs et deux graphiques temporels."""
     st.set_page_config(page_title="SNCF Regularity", page_icon="🚆", layout="wide")
@@ -144,64 +94,16 @@ def main() -> None:
             "Le fichier ne contient aucune ligne exploitable pour ces indicateurs."
         )
         st.stop()
+
     ### sidebar ###
-    filtered, start, end = sidebar(df)
+    filtered, filter_selection = date_itinerary_sidebar(df)
+    ### main dashboard ###
+    render_dashboard(st, filtered, filter_selection, excluded)
 
-    ### Indicators ###
-    monthly = monthly_indicators(filtered)
-    planned = int(filtered[PLANNED].sum())
-    cancelled = int(filtered[CANCELLED].sum())
-    circulated = planned - cancelled
-    delay = float(monthly["delay_minutes"].sum() / circulated) if circulated else None
-    st.subheader(f"Votre bilan : {start} à {end}")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Circulations prévues", f"{planned:,}".replace(",", " "))
-    col2.metric("Taux d'annulation", f"{cancelled / planned * 100:.2f} %")
-    col3.metric(
-        "Retard moyen à l'arrivée",
-        f"{delay:.1f} min" if delay is not None else "Indisponible",
-    )
-    st.caption(
-        f"{len(filtered):,} observations mensuelles par liaison · "
-        f"{filtered[[DEPARTURE, ARRIVAL]].drop_duplicates().shape[0]} liaisons orientées. "
-        "Une circulation est comptée pour chaque liaison déclarée dans le dataset ; "
-        "ces volumes ne représentent pas nécessairement des trains uniques sur le réseau."
-    )
-
-    left, right = st.columns(2)
-    with left:
-        st.subheader("Comment évoluent les retards ?")
-        st.line_chart(
-            monthly[["Retard moyen à l'arrivée (min)"]],
-            x_label="Mois",
-            y_label="Minutes",
-            color="#2563EB",
-        )
-        st.caption(
-            "Retard moyen de tous les trains à l'arrivée, pondéré par le nombre "
-            "de circulations réalisées sur chaque liaison."
-        )
-    with right:
-        st.subheader("Quelle part des trains est annulée ?")
-        st.line_chart(
-            monthly[["Taux d'annulation (%)"]],
-            x_label="Mois",
-            y_label="Annulations (%)",
-            color="#E97732",
-        )
-        st.caption(
-            "Nombre total d'annulations / nombre total de circulations prévues × 100."
-        )
-
-    with st.expander("Voir les données de la sélection"):
-        st.dataframe(filtered, hide_index=True)
-    with st.expander("Comprendre les calculs"):
-        st.markdown("Lorem ipsum blablabla")
-        st.caption(f"{excluded} lignes écartées sur le fichier complet.")
-    st.markdown(
-        "[Consulter le jeu de données SNCF](https://ressources.data.sncf.com/"
-        "explore/dataset/regularite-mensuelle-tgv-aqst/information/)"
-    )
+    # TODO: do better implementation
+    # this is very silly way to implement. Probably a better way would be to have
+    # each indicator to load the data itself, only passing the main argument? but the
+    # would also need sidebar info? need to share info? not sure how to do
 
 
 if __name__ == "__main__":
