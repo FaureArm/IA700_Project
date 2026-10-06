@@ -22,10 +22,7 @@ TITLE = "Projet IA700"
 
 
 def render_dashboard(
-    st: st.streamlit,
-    filtered: pd.DataFrame,
-    filter_selection: FilterSelection,
-    excluded,
+    filtered: pd.DataFrame, filter_selection: FilterSelection, excluded
 ):
 
     start = filter_selection.start_month

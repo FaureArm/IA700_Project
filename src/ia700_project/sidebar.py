@@ -4,12 +4,10 @@ kind of sidebars for
 streamlit app.
 """
 
-from pathlib import Path
 import pandas as pd
 import streamlit as st
-from dataclasses import dataclass
-from ia700_project.models import FilterSelection
 
+from ia700_project.models import FilterSelection
 
 # TODO: find a way to have this values global accross files. Import ?
 PLANNED = "Nombre de circulations prévues"

@@ -9,8 +9,10 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from ia700_project.sidebar import date_itinerary_sidebar
 from ia700_project.dashboards import render_dashboard
+from ia700_project.sidebar import date_itinerary_sidebar
+from ia700_project.pages import main_page, test_page
+from ia700_project.streamlit_utils import header
 
 
 # TODO: separate main streamlit functionalities into different files (eg: sidebar, title, graphs, cols, etc)
@@ -66,39 +68,20 @@ def load_data(path: str, modified_at: int) -> tuple[pd.DataFrame, int]:
 
 def main() -> None:
     """Affiche les filtres, les indicateurs et deux graphiques temporels."""
-    st.set_page_config(page_title="SNCF Regularity", page_icon="🚆", layout="wide")
-    st.title(TITLE)
-    st.markdown(
-        "Explorez la régularité des TGV : **comment evolue la fiabilite des vos trajets TGV lors de vos departs ?**\n"
-        " Sélectionnez vos dates de trajet ainsi que vos gares, et obtenez un apercu des risques de perturbations."
-    )
-    st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
 
-    try:
-        df, excluded = load_data(
-            str(DATA_PATH), DATA_PATH.stat().st_mtime_ns
-        )  # see func load_data() to understand what are excluded lines
-    except FileNotFoundError:
-        st.error("Le jeu de données SNCF est absent.")
-        st.info(
-            "Placez regularite-mensuelle-tgv-aqst.csv dans le dossier data/ "
-            "à la racine du projet. Ce fichier doit aussi être disponible sur l'hébergeur."
-        )
-        st.stop()
-    except (OSError, ValueError, pd.errors.ParserError) as error:
-        st.error(f"Impossible de lire les données SNCF : {error}")
-        st.stop()
+    st.set_page_config(page_title="SNCF Regularity", layout="wide")
 
-    if df.empty:
-        st.warning(
-            "Le fichier ne contient aucune ligne exploitable pour ces indicateurs."
-        )
-        st.stop()
+    st.sidebar.title(TITLE)
 
-    ### sidebar ###
-    filtered, filter_selection = date_itinerary_sidebar(df)
-    ### main dashboard ###
-    render_dashboard(st, filtered, filter_selection, excluded)
+    page = header()
+    if page == "Home":
+        main_page()
+    elif page == "Test":
+        test_page()
+    elif page == "Data quality":
+        # render_data_quality_page(dataset)
+        # TODO
+        pass
 
     # TODO: do better implementation
     # this is very silly way to implement. Probably a better way would be to have
