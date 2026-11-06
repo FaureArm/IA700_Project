@@ -15,7 +15,7 @@ from ia700_project.pages import main_page
 
 
 def header():
-    st.sidebar.header("Navigation")
+
     if "current_page" not in st.session_state:
         st.session_state.current_page = "Home"
 
