@@ -6,8 +6,9 @@ streamlit app.
 
 import pandas as pd
 import streamlit as st
+from datetime import date, timedelta
 
-from ia700_project.models import FilterSelection
+from ia700_project.models import TravelSelection
 
 # TODO: find a way to have this values global accross files. Import ?
 PLANNED = "Nombre de circulations prévues"
@@ -19,7 +20,7 @@ ALL_STATIONS = "Toutes les gares"
 TITLE = "Projet IA700"
 
 
-def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, FilterSelection]:
+def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, TravelSelection]:
     """Render sidebar controls and filter train data by month and itinerary.
 
     Args:
@@ -36,43 +37,67 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, FilterSelect
         match the selection.
     """
     st.sidebar.header("Votre sélection")
-    months = sorted(df["Date"].dt.strftime("%Y-%m").unique().tolist())
-    if len(months) > 1:
-        start, end = st.sidebar.select_slider(
-            "Période", options=months, value=(months[0], months[-1]), key="period"
-        )
-    else:
-        start = end = months[0]
-        st.sidebar.caption(f"Période disponible : {start}")
-    month_values = df["Date"].dt.strftime(
-        "%Y-%m"
-    )  # cut days from format since we only have months
-    filtered = df.loc[month_values.between(start, end)].copy()
+
+    # select departure and arrival stations ##
+
+    # we have a default selection, but otherwise we just
+    # use first in our lists
+    departures = sorted(df[DEPARTURE].unique().tolist())
+    default_departure = "PARIS LYON"
 
     departure = st.sidebar.selectbox(
         "Gare de départ",
-        [ALL_STATIONS] + sorted(filtered[DEPARTURE].unique().tolist()),
+        departures,
+        index=(
+            departures.index(default_departure)
+            if default_departure in departures
+            else 0
+        ),
         key="departure",
     )
-    if departure != ALL_STATIONS:
-        filtered = filtered.loc[filtered[DEPARTURE].eq(departure)]
+
+    filtered = df.loc[df[DEPARTURE].eq(departure)]
+
+    arrivals = sorted(filtered[ARRIVAL].unique().tolist())
+    default_arrival = "LYON PART DIEU"
+
     arrival = st.sidebar.selectbox(
         "Gare d'arrivée",
-        [ALL_STATIONS] + sorted(filtered[ARRIVAL].unique().tolist()),
+        arrivals,
+        index=(
+            arrivals.index(default_arrival)
+            if default_arrival in arrivals
+            else 0
+        ),
         key="arrival",
     )
-    if arrival != ALL_STATIONS:
-        filtered = filtered.loc[filtered[ARRIVAL].eq(arrival)]
 
-    if filtered.empty:
-        st.info("Aucune donnée disponible pour cette sélection.")
-        st.stop()
+    ## Date selection ##
+    # calendar based to mimic traveling dates
 
-    filter_selection = FilterSelection(
-        start_month=start,
-        end_month=end,
-        departure=None if departure == ALL_STATIONS else departure,
-        arrival=None if arrival == ALL_STATIONS else arrival,
+    today = date.today()
+
+    travel_dates = st.sidebar.date_input(
+        "Dates de voyage",
+        value=(today, today + timedelta(days=7)),
+        min_value=today,
+        format="DD/MM/YYYY",
+        key="travel_dates",
     )
 
-    return filtered, filter_selection
+    if len(travel_dates) != 2:
+        st.sidebar.info("Sélectionnez le début et la fin de votre période.")
+        st.stop()
+
+    travel_start, travel_end = travel_dates
+
+    filtered = filtered.loc[filtered[ARRIVAL].eq(arrival)]
+
+    selection = TravelSelection(
+        departure=departure,
+        arrival=arrival,
+        travel_start=travel_start,
+        travel_end=travel_end,
+    )
+
+    return filtered, selection

@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import pandas as pd
+from datetime import date
 
 
 @dataclass(frozen=True)
@@ -13,6 +14,12 @@ class FilterSelection:
     departure: str | None = None
     arrival: str | None = None
 
+@dataclass(frozen=True)
+class TravelSelection:
+    departure: str
+    arrival: str
+    travel_start: date
+    travel_end: date
 
 class LoadedData:
     """class to hold and handle loaded data"""

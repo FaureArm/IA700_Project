@@ -6,8 +6,7 @@ from pathlib import Path
 import streamlit as st
 from ia700_project.indicators import monthly_indicators
 import pandas as pd
-from ia700_project.models import FilterSelection
-
+from ia700_project.models import FilterSelection, TravelSelection
 
 DATA_PATH = (
     Path(__file__).resolve().parents[2] / "data" / "regularite-mensuelle-tgv-aqst.csv"
@@ -82,3 +81,47 @@ def render_dashboard(
         "[Consulter le jeu de données SNCF](https://ressources.data.sncf.com/"
         "explore/dataset/regularite-mensuelle-tgv-aqst/information/)"
     )
+
+
+def render_exploration_dashboard(selection: TravelSelection) -> None:
+    """Display the travel summary and historical analysis placeholders."""
+    st.subheader(f"{selection.departure} → {selection.arrival}")
+    st.write(
+        f"Voyage du {selection.travel_start:%d/%m/%Y} "
+        f"au {selection.travel_end:%d/%m/%Y}"
+    )
+
+    st.info(
+        "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste" \
+        "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation" \
+        "On peut probablement juste faire par mois au final"
+    )
+
+    st.subheader("Que montre l’historique ?")
+
+    volume, cancellations, delays, duration = st.columns(4)
+    volume.metric("Circulations étudiées", "—")
+    cancellations.metric("Taux d’annulation", "—")
+    delays.metric("Taux de retard à l’arrivée", "—")
+    duration.metric("Retard moyen à l’arrivée", "—")
+
+    st.caption(
+        "TODO: indicateurs à calculer "
+        "-> décrire les observations historiques de cette liaison"
+    )
+
+    left, right = st.columns(2)
+
+    with left:
+        st.subheader("Évolution dans le temps")
+        st.info("afficher graphs d'évolutions de retard et annulation")
+
+    with right:
+        st.subheader("Causes des retards")
+        st.info("Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos")
+
+    with st.expander("Comprendre les résultats"):
+        st.write(
+            "La période historique utilisée, le nombre de mois disponibles "
+            "et les définitions des indicateurs seront précisés ici."
+        )
