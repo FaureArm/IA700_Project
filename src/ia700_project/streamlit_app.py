@@ -11,7 +11,7 @@ import streamlit as st
 
 from ia700_project.dashboards import render_dashboard
 from ia700_project.sidebar import date_itinerary_sidebar
-from ia700_project.pages import main_page, test_page
+from ia700_project.pages import main_page, methods_page,comparison_page, exploration_page
 from ia700_project.streamlit_utils import header
 
 
@@ -69,19 +69,19 @@ def load_data(path: str, modified_at: int) -> tuple[pd.DataFrame, int]:
 def main() -> None:
     """Affiche les filtres, les indicateurs et deux graphiques temporels."""
 
-    st.set_page_config(page_title="SNCF Regularity", layout="wide")
-
+    st.set_page_config(page_title="SNCF Regularity", page_icon="🚆", layout="wide")
     st.sidebar.title(TITLE)
 
-    page = header()
-    if page == "Home":
-        main_page()
-    elif page == "Test":
-        test_page()
-    elif page == "Data quality":
-        # render_data_quality_page(dataset)
-        # TODO
-        pass
+    page = st.navigation(
+        [
+            st.Page(main_page, title="Accueil", default=True),
+            st.Page(exploration_page, title="Explorer une liaison"),
+            st.Page(comparison_page, title="Comparer les liaisons"),
+            st.Page(methods_page, title="Données et méthodes"),
+        ],
+        position="top",
+    )
+    page.run()
 
     # TODO: do better implementation
     # this is very silly way to implement. Probably a better way would be to have

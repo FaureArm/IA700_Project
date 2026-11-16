@@ -55,9 +55,14 @@ def load_data(path: str, modified_at: int) -> tuple[pd.DataFrame, int]:
     )
     return df.loc[valid].copy(), int((~valid).sum())
 
-
 def main_page():
-    st.set_page_config(page_title="SNCF Regularity", page_icon="🚆", layout="wide")
+    st.title("Accueil")
+    st.map(
+        pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
+        zoom=4,
+    )
+
+def exploration_page():
     st.title(TITLE)
     st.markdown(
         "Explorez la régularité des TGV : **comment evolue la fiabilite des vos trajets TGV lors de vos departs ?**\n"
@@ -93,8 +98,10 @@ def main_page():
     render_dashboard(filtered, filter_selection, excluded)
 
 
-def test_page():
-    st.map(
-        pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
-        zoom=4,
-    )
+def comparison_page():
+    st.title("Comparer les liaisons")
+    return
+
+def methods_page():
+    st.title("Données et méthodes")
+    return
