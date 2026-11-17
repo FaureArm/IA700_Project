@@ -6,7 +6,7 @@ from pathlib import Path
 import streamlit as st
 from ia700_project.indicators import monthly_indicators
 import pandas as pd
-from ia700_project.models import FilterSelection, TravelSelection
+from ia700_project.models import FilterSelection, TravelSelection, ComparisonSelection
 
 DATA_PATH = (
     Path(__file__).resolve().parents[2] / "data" / "regularite-mensuelle-tgv-aqst.csv"
@@ -85,11 +85,7 @@ def render_dashboard(
 
 def render_exploration_dashboard(selection: TravelSelection) -> None:
     """Display the travel summary and historical analysis placeholders."""
-    st.subheader(f"{selection.departure} → {selection.arrival}")
-    st.write(
-        f"Voyage du {selection.travel_start:%d/%m/%Y} "
-        f"au {selection.travel_end:%d/%m/%Y}"
-    )
+    render_travel_summary(selection)
 
     st.info(
         "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste" \
@@ -97,6 +93,52 @@ def render_exploration_dashboard(selection: TravelSelection) -> None:
         "On peut probablement juste faire par mois au final"
     )
 
+    render_summary_metrics()
+
+    left, right = st.columns(2)
+
+    with left:
+        render_exploration_time_evolution()
+
+    with right:
+        render_delay_causes()
+
+    with st.expander("Comprendre les résultats"):
+        st.write(
+            "blablabla petite description pour faire jolie"
+        )
+
+
+def render_ranking(selection: ComparisonSelection) -> None:
+    st.subheader(f"Classement · {selection.entity}")
+    st.caption(
+        f"{selection.metric} · {selection.top_n} résultats maximum · "
+        f"minimum {selection.min_volume} circulations prévues"
+    )
+    st.info(
+        "Afficher ici le classement et les volumes associés à la recherche du sidebar"
+    )
+
+
+def render_time_evolution(selection: ComparisonSelection) -> None:
+    st.subheader("Comparer les évolutions")
+    st.info(
+        " Ici, montrer une évolution temporelle de nos variables séléctionnées " \
+        " montrer évolution pour tous les candidats du top ? eg si on choisit le nbre de résultats" \
+        "valant 10, seuelement 10 sur graphes? ou tous? prendre en compte nombre minimal de vilume?"
+        
+    )
+
+
+def render_travel_summary(selection: TravelSelection) -> None:
+    st.subheader(f"{selection.departure} → {selection.arrival}")
+    st.write(
+        f"Voyage du {selection.travel_start:%d/%m/%Y} "
+        f"au {selection.travel_end:%d/%m/%Y}"
+    )
+
+
+def render_summary_metrics() -> None:
     st.subheader("Que montre l’historique ?")
 
     volume, cancellations, delays, duration = st.columns(4)
@@ -110,18 +152,12 @@ def render_exploration_dashboard(selection: TravelSelection) -> None:
         "-> décrire les observations historiques de cette liaison"
     )
 
-    left, right = st.columns(2)
 
-    with left:
-        st.subheader("Évolution dans le temps")
-        st.info("afficher graphs d'évolutions de retard et annulation")
+def render_exploration_time_evolution() -> None:
+    st.subheader("Évolution dans le temps")
+    st.info("afficher graphs d'évolutions de retard et annulation")
 
-    with right:
-        st.subheader("Causes des retards")
-        st.info("Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos")
 
-    with st.expander("Comprendre les résultats"):
-        st.write(
-            "La période historique utilisée, le nombre de mois disponibles "
-            "et les définitions des indicateurs seront précisés ici."
-        )
+def render_delay_causes() -> None:
+    st.subheader("Causes des retards")
+    st.info("Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos")

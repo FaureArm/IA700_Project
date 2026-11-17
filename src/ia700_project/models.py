@@ -35,3 +35,13 @@ class LoadedData:
 
     def total_included_rows(self):
         return len(self.frame)
+
+
+@dataclass(frozen=True)
+class ComparisonSelection:
+    """Store the selected ranking options."""
+
+    entity: str
+    metric: str
+    top_n: int
+    min_volume: int

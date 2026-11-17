@@ -7,8 +7,15 @@ from ia700_project.data import DATA_PATH, load_data
 import pandas as pd
 import streamlit as st
 
-from ia700_project.sidebar import date_itinerary_sidebar
-from ia700_project.dashboards import render_exploration_dashboard
+from ia700_project.sidebar import (
+    date_itinerary_sidebar,
+    comparison_sidebar,
+)
+from ia700_project.dashboards import (
+    render_exploration_dashboard,
+    render_ranking,
+    render_time_evolution,
+)
 
 TITLE = "Projet IA700"
 
@@ -56,8 +63,28 @@ def exploration_page():
 
 
 def comparison_page():
+    """
+    Page to show some global basic metrics,
+    through rankings, volumes, evolutions, etc.
+    """
     st.title("Comparer les liaisons")
-    return
+    st.markdown(
+        "Comparez la régularité des liaisons et des gares "
+        "sur une même période historique."
+    )
+    # sidebar to select what to show
+    # returns type of comparison, metric, top_n, min_volume
+    # for more details check in sidebar.py
+    selection = comparison_sidebar()
+
+
+    render_ranking(selection)
+    render_time_evolution(selection)
+
+    with st.expander("Comment lire cette comparaison ?"):
+        st.write(
+            "blablabla petite description pour faire jolie"
+        )
 
 def methods_page():
     st.title("Données et méthodes")

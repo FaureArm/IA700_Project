@@ -8,7 +8,8 @@ import pandas as pd
 import streamlit as st
 from datetime import date, timedelta
 
-from ia700_project.models import TravelSelection
+from ia700_project.models import TravelSelection, ComparisonSelection
+
 
 # TODO: find a way to have this values global accross files. Import ?
 PLANNED = "Nombre de circulations prévues"
@@ -101,3 +102,57 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, TravelSelect
     )
 
     return filtered, selection
+
+
+def comparison_sidebar() -> ComparisonSelection:
+    """Render comparison controls and return the selected options."""
+    st.sidebar.header("Votre comparaison")
+    
+    entity = st.sidebar.selectbox(
+        "Que souhaitez-vous comparer ?",
+        ["Liaisons", "Gares de départ", "Gares d’arrivée"],
+        key="comparison_entity",
+    )
+
+    metric = st.sidebar.selectbox(
+        "Indicateur",
+        [
+            "Taux d’annulation",
+            "Taux de retard à l’arrivée",
+            "Retard moyen à l’arrivée",
+        ],
+        key="comparison_metric",
+    )
+
+    top_n = st.sidebar.selectbox(
+        "Nombre de résultats",
+        [5, 10, 20],
+        index=1,
+        key="comparison_top_n",
+    )
+
+    min_volume = st.sidebar.selectbox(
+        "Minimum de circulations prévues sur la période",
+        [0, 50, 100, 500],
+        index=2,
+        key="comparison_min_volume",
+    )
+
+    st.sidebar.caption(
+        "Ce seuil permettra d’écarter les résultats "
+        "reposant sur un faible nombre de circulations"
+    )
+
+    return ComparisonSelection(
+        entity=entity,
+        metric=metric,
+        top_n=top_n,
+        min_volume=min_volume,
+    )
+
+
+
+
+
+
+
