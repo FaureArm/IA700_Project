@@ -5,18 +5,19 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from ia700_project.constants import (
+    ARRIVAL,
+    CANCELLED,
+    DELAY,
+    DEPARTURE,
+    PLANNED,
+)
 
 DATA_PATH = (
     Path(__file__).resolve().parents[2] # adjust the path as needed
     / "data"
     / "regularite-mensuelle-tgv-aqst.csv"
 )
-
-PLANNED = "Nombre de circulations prévues"
-CANCELLED = "Nombre de trains annulés"
-DELAY = "Retard moyen de tous les trains à l'arrivée"
-DEPARTURE = "Gare de départ"
-ARRIVAL = "Gare d'arrivée"
 
 
 

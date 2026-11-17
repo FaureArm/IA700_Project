@@ -4,19 +4,17 @@ Depuis la racine du dépôt :
     uv run streamlit run src/ia700_project/streamlit_app.py
 """
 
-from pathlib import Path
 
-import pandas as pd
 import streamlit as st
 
-from ia700_project.dashboards import render_dashboard
-from ia700_project.sidebar import date_itinerary_sidebar
-from ia700_project.pages import main_page, methods_page,comparison_page, exploration_page
-from ia700_project.streamlit_utils import header
+from ia700_project.pages import (
+    comparison_page,
+    exploration_page,
+    main_page,
+    methods_page,
+)
 
-
-# TODO: add dataclasses to simplify returns of recurring features, ex: filter selection,
-# TODO: create classes to  handle the different datasets/representations
+# TODO: create classes to  handle the different datasets/representations?
 # TODO: change all comments and descriptions to english
 
 
@@ -24,11 +22,15 @@ TITLE = "Projet IA700"
 
 
 def main() -> None:
-    """Affiche les filtres, les indicateurs et deux graphiques temporels."""
+    """Configure the application and run the selected page"""
 
     st.set_page_config(page_title="SNCF Regularity", page_icon="🚆", layout="wide")
     st.sidebar.title(TITLE)
 
+
+    ## define navigation bar ##
+    # perhaps could be done in a specific component
+    # although might not be reused so not sure if it's worth it
     page = st.navigation(
         [
             st.Page(main_page, title="Accueil", default=True),
@@ -39,12 +41,6 @@ def main() -> None:
         position="top",
     )
     page.run()
-
-    # TODO: do better implementation
-    # this is very silly way to implement. Probably a better way would be to have
-    # each indicator to load the data itself, only passing the main argument? but the
-    # would also need sidebar info? need to share info? not sure how to do
-
 
 if __name__ == "__main__":
     main()

@@ -1,18 +1,10 @@
 """Define shared data structures for the application."""
 
 from dataclasses import dataclass
-import pandas as pd
 from datetime import date
 
+import pandas as pd
 
-@dataclass(frozen=True)
-class FilterSelection:
-    """Store selected month boundaries and optional station filters."""
-
-    start_month: str
-    end_month: str
-    departure: str | None = None
-    arrival: str | None = None
 
 @dataclass(frozen=True)
 class TravelSelection:
@@ -30,11 +22,11 @@ class LoadedData:
         self.excluded_rows_ = excluded_rows
         self.source_ = source
 
-    def total_rows(self):
-        return len(self.frame) + self.excluded_rows
+    def total_rows(self) -> int:
+        return len(self.data_) + self.excluded_rows_
 
-    def total_included_rows(self):
-        return len(self.frame)
+    def total_included_rows(self) -> int:
+        return len(self.data_)
 
 
 @dataclass(frozen=True)

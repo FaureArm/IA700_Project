@@ -4,38 +4,29 @@ kind of sidebars for
 streamlit app.
 """
 
-import pandas as pd
-import streamlit as st
 from datetime import date, timedelta
 
-from ia700_project.models import TravelSelection, ComparisonSelection
+import pandas as pd
+import streamlit as st
+
+from ia700_project.constants import (
+    ARRIVAL,
+    CANCELLED,
+    DELAY,
+    DEPARTURE,
+    PLANNED,
+)
+from ia700_project.models import ComparisonSelection, TravelSelection
 
 
-# TODO: find a way to have this values global accross files. Import ?
-PLANNED = "Nombre de circulations prévues"
-CANCELLED = "Nombre de trains annulés"
-DELAY = "Retard moyen de tous les trains à l'arrivée"
-DEPARTURE = "Gare de départ"
-ARRIVAL = "Gare d'arrivée"
-ALL_STATIONS = "Toutes les gares"
-TITLE = "Projet IA700"
-
-
-def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, TravelSelection]:
-    """Render sidebar controls and filter train data by month and itinerary.
+def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
+    """Render route and travel-date controls and return the selection
 
     Args:
-        df: Nonempty train dataset with a datetime-like "Date" column
-            and departure and arrival station columns.
+        df: Nonempty dataset containing departure and arrival stations
 
     Returns:
-        A tuple containing the filtered dataset and the selected filters.
-        Month boundaries are inclusive. A station value of None in the
-        filter selection means all stations are included.
-
-    Notes:
-        Displays a message and stops Streamlit execution if no rows
-        match the selection.
+        Selected stations and travel dates
     """
     st.sidebar.header("Votre sélection")
 
@@ -92,8 +83,6 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, TravelSelect
 
     travel_start, travel_end = travel_dates
 
-    filtered = filtered.loc[filtered[ARRIVAL].eq(arrival)]
-
     selection = TravelSelection(
         departure=departure,
         arrival=arrival,
@@ -101,11 +90,11 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> tuple[pd.DataFrame, TravelSelect
         travel_end=travel_end,
     )
 
-    return filtered, selection
+    return selection
 
 
 def comparison_sidebar() -> ComparisonSelection:
-    """Render comparison controls and return the selected options."""
+    """Render comparison selected metrics and return the selected options"""
     st.sidebar.header("Votre comparaison")
     
     entity = st.sidebar.selectbox(

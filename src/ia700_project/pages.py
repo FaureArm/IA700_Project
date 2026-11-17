@@ -2,31 +2,30 @@
 Create pages to host dashboards
 """
 
-from pathlib import Path
-from ia700_project.data import DATA_PATH, load_data
 import pandas as pd
 import streamlit as st
 
-from ia700_project.sidebar import (
-    date_itinerary_sidebar,
-    comparison_sidebar,
-)
 from ia700_project.dashboards import (
+    render_comparison_dashboard,
     render_exploration_dashboard,
-    render_ranking,
-    render_time_evolution,
+    render_overview_dashboard,
 )
-
-TITLE = "Projet IA700"
-
+from ia700_project.data import DATA_PATH, load_data
+from ia700_project.sidebar import (
+    comparison_sidebar,
+    date_itinerary_sidebar,
+)
 
 
 def main_page():
     st.title("Accueil")
-    st.map(
-        pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
-        zoom=4,
+    st.markdown(
+        "Découvrez la régularité des liaisons TGV, "
+        "explorez l’historique de votre trajet et comparez les résultats."
     )
+    st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
+
+    render_overview_dashboard()
 
 def exploration_page():
     st.title("Explorer une liaison")
@@ -37,7 +36,7 @@ def exploration_page():
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
 
     try:
-        df, excluded = load_data(
+        df, _ = load_data(
             str(DATA_PATH), DATA_PATH.stat().st_mtime_ns
         )  # see func load_data() to understand what are excluded lines
     except FileNotFoundError:
@@ -58,9 +57,8 @@ def exploration_page():
         st.stop()
 
     ### sidebar ###
-    filtered, selection = date_itinerary_sidebar(df)
+    selection = date_itinerary_sidebar(df)
     render_exploration_dashboard(selection)
-
 
 def comparison_page():
     """
@@ -78,13 +76,7 @@ def comparison_page():
     selection = comparison_sidebar()
 
 
-    render_ranking(selection)
-    render_time_evolution(selection)
-
-    with st.expander("Comment lire cette comparaison ?"):
-        st.write(
-            "blablabla petite description pour faire jolie"
-        )
+    render_comparison_dashboard(selection)
 
 def methods_page():
     st.title("Données et méthodes")

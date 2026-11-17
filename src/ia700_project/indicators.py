@@ -1,21 +1,12 @@
 """
 Create indicators to later be shown through dashboards
+NB this is temp, placeholder while I wait to get actual values 
+to then be added here
 """
-
-from pathlib import Path
 
 import pandas as pd
 
-DATA_PATH = (
-    Path(__file__).resolve().parents[2] / "data" / "regularite-mensuelle-tgv-aqst.csv"
-)
-PLANNED = "Nombre de circulations prévues"
-CANCELLED = "Nombre de trains annulés"
-DELAY = "Retard moyen de tous les trains à l'arrivée"
-DEPARTURE = "Gare de départ"
-ARRIVAL = "Gare d'arrivée"
-ALL_STATIONS = "Toutes les gares"
-TITLE = "Projet IA700"
+from ia700_project.constants import CANCELLED, DELAY, PLANNED
 
 
 def monthly_indicators(df: pd.DataFrame) -> pd.DataFrame:

@@ -6,7 +6,7 @@ This project focuses on data analysis, through a webbapp, of SNCF monthly TGV re
 Problem tackled by this project: "Aider un voyageur à évaluer la fiabilité d’une liaison TGV selon son trajet et sa période de voyage, afin d’anticiper son risque de retard et/ou d'annulation."
 
 To get the project running, simply run from root:
-> streamlit run /src/streamlit_app.py
+> uv run streamlit run src/ia700_project/streamlit_app.py
 
 
 Pages to do:

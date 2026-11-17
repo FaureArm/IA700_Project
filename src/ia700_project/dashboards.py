@@ -2,89 +2,14 @@
 Create dashboards to be displayed by our steamlit app.
 """
 
-from pathlib import Path
-import streamlit as st
-from ia700_project.indicators import monthly_indicators
 import pandas as pd
-from ia700_project.models import FilterSelection, TravelSelection, ComparisonSelection
+import streamlit as st
 
-DATA_PATH = (
-    Path(__file__).resolve().parents[2] / "data" / "regularite-mensuelle-tgv-aqst.csv"
-)
-PLANNED = "Nombre de circulations prévues"
-CANCELLED = "Nombre de trains annulés"
-DELAY = "Retard moyen de tous les trains à l'arrivée"
-DEPARTURE = "Gare de départ"
-ARRIVAL = "Gare d'arrivée"
-ALL_STATIONS = "Toutes les gares"
-TITLE = "Projet IA700"
-
-
-def render_dashboard(
-    filtered: pd.DataFrame, filter_selection: FilterSelection, excluded
-):
-
-    start = filter_selection.start_month
-    end = filter_selection.end_month
-
-    monthly = monthly_indicators(filtered)
-    planned = int(filtered[PLANNED].sum())
-    cancelled = int(filtered[CANCELLED].sum())
-    circulated = planned - cancelled
-    delay = float(monthly["delay_minutes"].sum() / circulated) if circulated else None
-    st.subheader(f"Votre bilan : {start} à {end}")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Circulations prévues", f"{planned:,}".replace(",", " "))
-    col2.metric("Taux d'annulation", f"{cancelled / planned * 100:.2f} %")
-    col3.metric(
-        "Retard moyen à l'arrivée",
-        f"{delay:.1f} min" if delay is not None else "Indisponible",
-    )
-    st.caption(
-        f"{len(filtered):,} observations mensuelles par liaison · "
-        f"{filtered[[DEPARTURE, ARRIVAL]].drop_duplicates().shape[0]} liaisons orientées. "
-        "Une circulation est comptée pour chaque liaison déclarée dans le dataset ; "
-        "ces volumes ne représentent pas nécessairement des trains uniques sur le réseau."
-    )
-
-    left, right = st.columns(2)
-    with left:
-        st.subheader("Comment évoluent les retards ?")
-        st.line_chart(
-            monthly[["Retard moyen à l'arrivée (min)"]],
-            x_label="Mois",
-            y_label="Minutes",
-            color="#2563EB",
-        )
-        st.caption(
-            "Retard moyen de tous les trains à l'arrivée, pondéré par le nombre "
-            "de circulations réalisées sur chaque liaison."
-        )
-    with right:
-        st.subheader("Quelle part des trains est annulée ?")
-        st.line_chart(
-            monthly[["Taux d'annulation (%)"]],
-            x_label="Mois",
-            y_label="Annulations (%)",
-            color="#E97732",
-        )
-        st.caption(
-            "Nombre total d'annulations / nombre total de circulations prévues × 100."
-        )
-
-    with st.expander("Voir les données de la sélection"):
-        st.dataframe(filtered, hide_index=True)
-    with st.expander("Comprendre les calculs"):
-        st.markdown("Lorem ipsum blablabla")
-        st.caption(f"{excluded} lignes écartées sur le fichier complet.")
-    st.markdown(
-        "[Consulter le jeu de données SNCF](https://ressources.data.sncf.com/"
-        "explore/dataset/regularite-mensuelle-tgv-aqst/information/)"
-    )
+from ia700_project.models import ComparisonSelection, TravelSelection
 
 
 def render_exploration_dashboard(selection: TravelSelection) -> None:
-    """Display the travel summary and historical analysis placeholders."""
+    """Display the travel summary and historical analysis placeholders"""
     render_travel_summary(selection)
 
     st.info(
@@ -120,7 +45,7 @@ def render_ranking(selection: ComparisonSelection) -> None:
     )
 
 
-def render_time_evolution(selection: ComparisonSelection) -> None:
+def render_comparison_time_evolution(selection: ComparisonSelection) -> None:
     st.subheader("Comparer les évolutions")
     st.info(
         " Ici, montrer une évolution temporelle de nos variables séléctionnées " \
@@ -161,3 +86,63 @@ def render_exploration_time_evolution() -> None:
 def render_delay_causes() -> None:
     st.subheader("Causes des retards")
     st.info("Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos")
+
+
+def render_comparison_dashboard(selection: ComparisonSelection) -> None:
+    render_ranking(selection)
+    render_comparison_time_evolution(selection)
+
+    with st.expander("Comment lire cette comparaison ?"):
+        st.write(
+            "blablabla petite description pour faire jolie"
+        )
+
+def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
+    """Small dashboard showing basic metrics
+    through three columns. 
+    NB: we spam try excepts, not very elegant but foolproof i suppose
+
+    Args:
+        liaison_count (int): _description_
+        station_count (int): _description_
+        latest_month (str): _description_
+    """
+    liaisons_col, stations_col, latest_month_col = st.columns(3)
+    if df is None or df.empty:
+            liaison_count, station_count, latest_month = "-", "-", "-"
+    else:
+        liaison_count, station_count, latest_month = 0,0,0#TODO: compute these metrics from df, maybe in a separate function to be reused in the sidebar?
+
+    liaisons_col, stations_col, latest_month_col = st.columns(3)
+    try:
+        liaisons_col.metric("Liaisons couvertes", liaison_count)
+    except TypeError:
+        liaisons_col.metric("Liaisons couvertes", "—")
+    try:
+        stations_col.metric("Gares représentées", station_count)
+    except TypeError:
+        stations_col.metric("Gares représentées", "—")
+    try:
+        latest_month_col.metric("Dernier mois disponible", latest_month)
+    except TypeError:
+        latest_month_col.metric("Dernier mois disponible", "—")
+
+
+def render_network_map() -> None:
+    st.subheader("Le réseau en un regard")
+
+    st.map(
+        pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
+        zoom=4,
+    )
+    st.caption(
+        "Petite caption à completer plus tard"
+    )
+
+
+def render_overview_dashboard() -> None:
+    """ Acts as a global entry point for different 
+    components to be shown on the main page"""
+    df = None
+    render_overview_metrics(df) # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
+    render_network_map() # to render the map with overlay
