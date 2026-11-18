@@ -36,9 +36,7 @@ def exploration_page():
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
 
     try:
-        df, _ = load_data(
-            str(DATA_PATH), DATA_PATH.stat().st_mtime_ns
-        )  # see func load_data() to understand what are excluded lines
+        df = load_data(str(DATA_PATH), DATA_PATH.stat().st_mtime_ns) #st_mtime_ns is the time of last modification of the file
     except FileNotFoundError:
         st.error("Le jeu de données SNCF est absent.")
         st.info(
@@ -58,7 +56,9 @@ def exploration_page():
 
     ### sidebar ###
     selection = date_itinerary_sidebar(df)
-    render_exploration_dashboard(selection)
+
+    ## main dashboard ##
+    render_exploration_dashboard(df, selection)
 
 
 def comparison_page():

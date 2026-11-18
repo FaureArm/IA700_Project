@@ -4,7 +4,7 @@ to then be added here
 """
 
 import pandas as pd
-
+from ia700_project.models import TravelSelection
 from ia700_project.constants import CANCELLED, DELAY, PLANNED
 
 
@@ -28,3 +28,27 @@ def monthly_indicators(df: pd.DataFrame) -> pd.DataFrame:
         monthly[CANCELLED] / monthly[PLANNED] * 100
     )
     return monthly
+
+
+def count_historical_scheduled_trains(
+    data: pd.DataFrame, selection: TravelSelection
+) -> int | None:
+    """Function to calculate the number of planned trains over a date selection"""
+    travel_months = pd.period_range(
+        start=selection.travel_start,
+        end=selection.travel_end,
+        freq="M",
+    ).month.unique()
+
+    matching_rows = (
+        data["gare_depart"].eq(selection.departure)
+        & data["gare_arrivee"].eq(selection.arrival)
+        & data["date"].dt.month.isin(travel_months)
+        & data["nb_train_prevu"].gt(0)
+    )
+    scheduled_counts = data.loc[matching_rows, "nb_train_prevu"]
+
+    if scheduled_counts.empty:
+        return None
+
+    return int(scheduled_counts.sum())

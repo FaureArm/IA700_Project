@@ -30,7 +30,8 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
     # we have a default selection, but otherwise we just
     # use first in our lists
-    departures = sorted(df[DEPARTURE].unique().tolist())
+    departures = sorted(df["gare_depart"].unique().tolist())
+
     default_departure = "PARIS LYON"
 
     departure = st.sidebar.selectbox(
@@ -43,10 +44,8 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
         ),
         key="departure",
     )
-
-    filtered = df.loc[df[DEPARTURE].eq(departure)]
-
-    arrivals = sorted(filtered[ARRIVAL].unique().tolist())
+    filtered = df.loc[df["gare_depart"].eq(departure)]
+    arrivals = sorted(filtered["gare_arrivee"].unique().tolist())
     default_arrival = "LYON PART DIEU"
 
     arrival = st.sidebar.selectbox(

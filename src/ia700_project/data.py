@@ -1,7 +1,7 @@
 """File to load, validate and handle our dataset"""
 
 from pathlib import Path
-
+from ia700_project.cleaning import clean_dataset
 import pandas as pd
 import streamlit as st
 
@@ -52,3 +52,10 @@ def load_data(path: str, modified_at: int) -> tuple[pd.DataFrame, int]:
         & df[[PLANNED, CANCELLED, DELAY]].lt(float("inf")).all(axis=1)
     )
     return df.loc[valid].copy(), int((~valid).sum())
+
+
+
+@st.cache_data
+def load_data(path: str, modified_at: int) -> pd.DataFrame:
+    """Charge et nettoie le CSV quand sa date de modification change."""
+    return clean_dataset(path)

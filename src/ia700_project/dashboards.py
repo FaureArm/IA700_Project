@@ -6,9 +6,10 @@ import streamlit as st
 
 from ia700_project.map_view import render_tgv_map
 from ia700_project.models import ComparisonSelection, TravelSelection
+from ia700_project.indicators import count_historical_scheduled_trains
 
 
-def render_exploration_dashboard(selection: TravelSelection) -> None:
+def render_exploration_dashboard(data: pd.DataFrame, selection: TravelSelection) -> None:
     """Display the travel summary and historical analysis placeholders"""
     render_travel_summary(selection)
 
@@ -17,8 +18,11 @@ def render_exploration_dashboard(selection: TravelSelection) -> None:
         "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation"
         "On peut probablement juste faire par mois au final"
     )
-
-    render_summary_metrics()
+    render_travel_summary(selection)
+    scheduled_trains_count = count_historical_scheduled_trains(
+        data, selection
+    )
+    render_summary_metrics(scheduled_trains_count)
 
     left, right = st.columns(2)
 
@@ -60,11 +64,16 @@ def render_travel_summary(selection: TravelSelection) -> None:
     )
 
 
-def render_summary_metrics() -> None:
+def render_summary_metrics(scheduled_trains_count: int | None) -> None:
     st.subheader("Que montre l’historique ?")
 
     volume, cancellations, delays, duration = st.columns(4)
-    volume.metric("Circulations étudiées", "—")
+    if scheduled_trains_count is None:
+        volume_label = "Indisponible"
+    else:
+        volume_label = f"{scheduled_trains_count:,}".replace(",", " ")
+
+    volume.metric("Nombres de circulations enregistrées", volume_label)
     cancellations.metric("Taux d’annulation", "—")
     delays.metric("Taux de retard à l’arrivée", "—")
     duration.metric("Retard moyen à l’arrivée", "—")
