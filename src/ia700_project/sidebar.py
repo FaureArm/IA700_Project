@@ -1,5 +1,4 @@
-"""
-Detail the creation and handling of different
+"""Detail the creation and handling of different
 kind of sidebars for
 streamlit app.
 """
@@ -11,10 +10,7 @@ import streamlit as st
 
 from ia700_project.constants import (
     ARRIVAL,
-    CANCELLED,
-    DELAY,
     DEPARTURE,
-    PLANNED,
 )
 from ia700_project.models import ComparisonSelection, TravelSelection
 
@@ -96,7 +92,7 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 def comparison_sidebar() -> ComparisonSelection:
     """Render comparison selected metrics and return the selected options"""
     st.sidebar.header("Votre comparaison")
-    
+
     entity = st.sidebar.selectbox(
         "Que souhaitez-vous comparer ?",
         ["Liaisons", "Gares de départ", "Gares d’arrivée"],
@@ -138,10 +134,3 @@ def comparison_sidebar() -> ComparisonSelection:
         top_n=top_n,
         min_volume=min_volume,
     )
-
-
-
-
-
-
-

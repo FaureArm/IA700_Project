@@ -7,8 +7,8 @@ User can also directly downloaded data and manually place it inside 'data' folde
 """
 
 from pathlib import Path
-import requests
 
+import requests
 
 TGV_REGULARITY_URL = "https://ressources.data.sncf.com/api/explore/v2.1/catalog/datasets/regularite-mensuelle-tgv-aqst/exports/csv?lang=fr&timezone=Europe%2FBerlin&use_labels=true&delimiter=%3B"
 TGV_REGULARITY_PATH = "data/regularite-mensuelle-tgv-aqst.csv"

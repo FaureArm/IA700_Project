@@ -1,4 +1,3 @@
-
 """Unit tests for the ``ia700_project.routes_metrics`` module."""
 
 import pandas as pd
@@ -10,7 +9,6 @@ from ia700_project import routes_metrics
 @pytest.fixture
 def df_trains(tmp_path):
     """Create a minimal cleaned dataset covering several seasons."""
-
     df = pd.DataFrame(
         {
             "date": [
@@ -54,7 +52,6 @@ def df_trains(tmp_path):
 
 def test_creer_csv_metriques_returns_dataframe(df_trains):
     """The function returns a pandas DataFrame."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     assert isinstance(result, pd.DataFrame)
@@ -63,7 +60,6 @@ def test_creer_csv_metriques_returns_dataframe(df_trains):
 
 def test_creer_csv_metriques_creates_route_column(df_trains):
     """Departure and arrival stations are combined into a route label."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     routes = result["Liaison"].tolist()
@@ -74,7 +70,6 @@ def test_creer_csv_metriques_creates_route_column(df_trains):
 
 def test_creer_csv_metriques_assigns_seasons(df_trains):
     """Each month is correctly assigned to its corresponding season."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     seasons = result["Saison"].tolist()
@@ -89,7 +84,6 @@ def test_creer_csv_metriques_assigns_seasons(df_trains):
 
 def test_creer_csv_metriques_aggregates_values(df_trains):
     """Train counts are correctly aggregated by route and season."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     winter = result[
@@ -104,7 +98,6 @@ def test_creer_csv_metriques_aggregates_values(df_trains):
 
 def test_creer_csv_metriques_calculates_operated_trains(df_trains):
     """The number of operated trains is correctly calculated."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     winter = result[
@@ -117,7 +110,6 @@ def test_creer_csv_metriques_calculates_operated_trains(df_trains):
 
 def test_creer_csv_metriques_calculates_delay_rate(df_trains):
     """The arrival delay rate is correctly calculated."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     winter = result[
@@ -130,7 +122,6 @@ def test_creer_csv_metriques_calculates_delay_rate(df_trains):
 
 def test_creer_csv_metriques_calculates_cancellation_rate(df_trains):
     """The cancellation rate is correctly calculated."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     winter = result[
@@ -143,7 +134,6 @@ def test_creer_csv_metriques_calculates_cancellation_rate(df_trains):
 
 def test_creer_csv_metriques_calculates_reliability_rate(df_trains):
     """The reliability rate is correctly calculated."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     winter = result[
@@ -156,7 +146,6 @@ def test_creer_csv_metriques_calculates_reliability_rate(df_trains):
 
 def test_creer_csv_metriques_groups_all_years(tmp_path):
     """Data from different years are grouped by route and season."""
-
     df = pd.DataFrame(
         {
             "date": ["2023-01-15", "2024-02-15"],
@@ -186,7 +175,6 @@ def test_creer_csv_metriques_groups_all_years(tmp_path):
 
 def test_creer_csv_metriques_handles_zero_operated_trains(tmp_path):
     """A zero number of operated trains produces NaN delay rates."""
-
     df = pd.DataFrame(
         {
             "date": ["2024-01-15"],
@@ -210,7 +198,6 @@ def test_creer_csv_metriques_handles_zero_operated_trains(tmp_path):
 
 def test_creer_csv_metriques_handles_zero_scheduled_trains(tmp_path):
     """Zero scheduled trains produce NaN rates without raising an error."""
-
     df = pd.DataFrame(
         {
             "date": ["2024-01-15"],
@@ -234,12 +221,9 @@ def test_creer_csv_metriques_handles_zero_scheduled_trains(tmp_path):
 
 def test_creer_csv_metriques_saves_output_file(df_trains, tmp_path):
     """The metrics are correctly saved when an output path is provided."""
-
     output_file = tmp_path / "metrics.csv"
 
-    result = routes_metrics.creer_csv_metriques(
-        df_trains, sortie=output_file
-    )
+    result = routes_metrics.creer_csv_metriques(df_trains, sortie=output_file)
 
     assert output_file.is_file()
 
@@ -253,7 +237,6 @@ def test_creer_csv_metriques_saves_output_file(df_trains, tmp_path):
 
 def test_creer_csv_metriques_accepts_string_paths(df_trains, tmp_path):
     """The function accepts input and output paths as strings."""
-
     output_file = tmp_path / "metrics.csv"
 
     result = routes_metrics.creer_csv_metriques(
@@ -267,7 +250,6 @@ def test_creer_csv_metriques_accepts_string_paths(df_trains, tmp_path):
 
 def test_creer_csv_metriques_without_output_path(df_trains):
     """No output file is created when no output path is provided."""
-
     result = routes_metrics.creer_csv_metriques(df_trains)
 
     assert isinstance(result, pd.DataFrame)

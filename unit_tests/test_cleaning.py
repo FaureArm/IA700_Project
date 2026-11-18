@@ -431,7 +431,10 @@ def test_fix_cause_percentages_blanks_only_unusable_breakdowns():
     df = make_df(
         [
             {},  # complete breakdown (sums to 100)
-            {**ZERO_CAUSES, "nb_train_retard_arrivee": 0},  # no delay, no cause
+            {
+                **ZERO_CAUSES,
+                "nb_train_retard_arrivee": 0,
+            },  # no delay, no cause
             {**ZERO_CAUSES},  # delays but no cause at all
             {**ZERO_CAUSES, "prct_cause_externe": 50.0},  # partial, below 90
             {**ZERO_CAUSES, "prct_cause_externe": 95.0},  # partial, kept

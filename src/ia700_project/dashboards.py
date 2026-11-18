@@ -1,5 +1,4 @@
-"""
-Create dashboards to be displayed by our steamlit app.
+"""Create dashboards to be displayed by our steamlit app.
 """
 
 import pandas as pd
@@ -13,8 +12,8 @@ def render_exploration_dashboard(selection: TravelSelection) -> None:
     render_travel_summary(selection)
 
     st.info(
-        "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste" \
-        "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation" \
+        "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste"
+        "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation"
         "On peut probablement juste faire par mois au final"
     )
 
@@ -29,9 +28,7 @@ def render_exploration_dashboard(selection: TravelSelection) -> None:
         render_delay_causes()
 
     with st.expander("Comprendre les résultats"):
-        st.write(
-            "blablabla petite description pour faire jolie"
-        )
+        st.write("blablabla petite description pour faire jolie")
 
 
 def render_ranking(selection: ComparisonSelection) -> None:
@@ -48,10 +45,9 @@ def render_ranking(selection: ComparisonSelection) -> None:
 def render_comparison_time_evolution(selection: ComparisonSelection) -> None:
     st.subheader("Comparer les évolutions")
     st.info(
-        " Ici, montrer une évolution temporelle de nos variables séléctionnées " \
-        " montrer évolution pour tous les candidats du top ? eg si on choisit le nbre de résultats" \
+        " Ici, montrer une évolution temporelle de nos variables séléctionnées "
+        " montrer évolution pour tous les candidats du top ? eg si on choisit le nbre de résultats"
         "valant 10, seuelement 10 sur graphes? ou tous? prendre en compte nombre minimal de vilume?"
-        
     )
 
 
@@ -85,7 +81,9 @@ def render_exploration_time_evolution() -> None:
 
 def render_delay_causes() -> None:
     st.subheader("Causes des retards")
-    st.info("Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos")
+    st.info(
+        "Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos"
+    )
 
 
 def render_comparison_dashboard(selection: ComparisonSelection) -> None:
@@ -93,13 +91,12 @@ def render_comparison_dashboard(selection: ComparisonSelection) -> None:
     render_comparison_time_evolution(selection)
 
     with st.expander("Comment lire cette comparaison ?"):
-        st.write(
-            "blablabla petite description pour faire jolie"
-        )
+        st.write("blablabla petite description pour faire jolie")
+
 
 def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
     """Small dashboard showing basic metrics
-    through three columns. 
+    through three columns.
     NB: we spam try excepts, not very elegant but foolproof i suppose
 
     Args:
@@ -109,9 +106,13 @@ def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
     """
     liaisons_col, stations_col, latest_month_col = st.columns(3)
     if df is None or df.empty:
-            liaison_count, station_count, latest_month = "-", "-", "-"
+        liaison_count, station_count, latest_month = "-", "-", "-"
     else:
-        liaison_count, station_count, latest_month = 0,0,0#TODO: compute these metrics from df, maybe in a separate function to be reused in the sidebar?
+        liaison_count, station_count, latest_month = (
+            0,
+            0,
+            0,
+        )  # TODO: compute these metrics from df, maybe in a separate function to be reused in the sidebar?
 
     liaisons_col, stations_col, latest_month_col = st.columns(3)
     try:
@@ -135,14 +136,15 @@ def render_network_map() -> None:
         pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
         zoom=4,
     )
-    st.caption(
-        "Petite caption à completer plus tard"
-    )
+    st.caption("Petite caption à completer plus tard")
 
 
 def render_overview_dashboard() -> None:
-    """ Acts as a global entry point for different 
-    components to be shown on the main page"""
+    """Acts as a global entry point for different
+    components to be shown on the main page
+    """
     df = None
-    render_overview_metrics(df) # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
-    render_network_map() # to render the map with overlay
+    render_overview_metrics(
+        df
+    )  # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
+    render_network_map()  # to render the map with overlay

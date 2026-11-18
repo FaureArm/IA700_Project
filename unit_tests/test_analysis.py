@@ -1,11 +1,9 @@
-
 """Unit tests for the ``ia700_project.analysis`` module."""
 
 import pandas as pd
 import pytest
 
 from ia700_project import analysis
-
 
 ROUTE_LYON = "PARIS LYON → MARSEILLE"
 ROUTE_LILLE = "LILLE → PARIS NORD"
@@ -16,14 +14,18 @@ def df_trains() -> pd.DataFrame:
     """Minimal dataset: 2 routes observed over 2 months."""
     return pd.DataFrame(
         {
-            analysis.COL_DATE: [
-                "2024-01", "2024-02", "2024-01", "2024-02"
-            ],
+            analysis.COL_DATE: ["2024-01", "2024-02", "2024-01", "2024-02"],
             analysis.COL_DEPARTURE: [
-                "PARIS LYON", "PARIS LYON", "LILLE", "LILLE"
+                "PARIS LYON",
+                "PARIS LYON",
+                "LILLE",
+                "LILLE",
             ],
             analysis.COL_ARRIVAL: [
-                "MARSEILLE", "MARSEILLE", "PARIS NORD", "PARIS NORD"
+                "MARSEILLE",
+                "MARSEILLE",
+                "PARIS NORD",
+                "PARIS NORD",
             ],
             analysis.COL_SCHEDULED: [100, 100, 50, 50],
             analysis.COL_CANCELLED: [10, 0, 0, 0],
@@ -107,9 +109,7 @@ def test_add_route_column_keeps_original_untouched(df_trains):
 
 def test_add_route_column_missing_column(df_trains):
     """Missing station columns raise MissingColumnsError."""
-    incomplete = df_trains.drop(
-        columns=[analysis.COL_DEPARTURE]
-    )
+    incomplete = df_trains.drop(columns=[analysis.COL_DEPARTURE])
 
     with pytest.raises(analysis.MissingColumnsError):
         analysis.add_route_column(incomplete)
@@ -120,9 +120,7 @@ def test_add_route_column_missing_column(df_trains):
 
 def test_compute_route_stats_values(df_trains):
     """Route reliability indicators are correctly computed."""
-    stats = analysis.compute_route_stats(
-        df_trains, min_months=1, min_trains=1
-    )
+    stats = analysis.compute_route_stats(df_trains, min_months=1, min_trains=1)
     row = stats.loc[ROUTE_LYON]
 
     assert row["months"] == 2
@@ -145,9 +143,7 @@ def test_compute_route_stats_without_trains_gives_nan(df_trains):
     """Rates are NaN when no services are scheduled."""
     df_trains[analysis.COL_SCHEDULED] = 0
 
-    stats = analysis.compute_route_stats(
-        df_trains, min_months=1, min_trains=0
-    )
+    stats = analysis.compute_route_stats(df_trains, min_months=1, min_trains=0)
 
     assert stats["delay_rate_15"].isna().all()
     assert stats["cancellation_rate"].isna().all()
@@ -155,13 +151,9 @@ def test_compute_route_stats_without_trains_gives_nan(df_trains):
 
 def test_compute_route_stats_missing_column(df_trains):
     """A missing column raises MissingColumnsError."""
-    incomplete = df_trains.drop(
-        columns=[analysis.COL_CANCELLED]
-    )
+    incomplete = df_trains.drop(columns=[analysis.COL_CANCELLED])
 
-    with pytest.raises(
-        analysis.MissingColumnsError, match="Missing columns"
-    ):
+    with pytest.raises(analysis.MissingColumnsError, match="Missing columns"):
         analysis.compute_route_stats(incomplete)
 
 
@@ -221,9 +213,7 @@ def test_seasonal_cause_shares_absent_season_is_nan():
     date = analysis.COL_DATE
     nb = analysis.COL_NB_ARRIVAL_DELAYS
 
-    df = make_causes_df(
-        [{date: "2024-01", nb: 10, external: 100.0}]
-    )
+    df = make_causes_df([{date: "2024-01", nb: 10, external: 100.0}])
 
     shares = analysis.seasonal_cause_shares(df)
 
@@ -253,9 +243,7 @@ def test_seasonal_cause_shares_ignores_negative_counts():
 
 def test_seasonal_cause_shares_missing_column():
     """A missing cause column raises MissingColumnsError."""
-    df = pd.DataFrame(
-        {analysis.COL_DATE: ["2024-01"]}
-    )
+    df = pd.DataFrame({analysis.COL_DATE: ["2024-01"]})
 
     with pytest.raises(analysis.MissingColumnsError):
         analysis.seasonal_cause_shares(df)

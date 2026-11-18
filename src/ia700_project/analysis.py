@@ -1,4 +1,3 @@
-
 """Functions for analyzing monthly TGV punctuality data."""
 
 from pathlib import Path
@@ -25,8 +24,7 @@ CAUSE_COLUMNS = {
     "Prct delay due to traffic management": "Traffic management",
     "Prct delay due to rolling stock": "Rolling stock",
     (
-        "Prct delay due to station management "
-        "and rolling stock reuse"
+        "Prct delay due to station management and rolling stock reuse"
     ): "Station management",
     (
         "Prct delay due to passenger handling "
@@ -99,9 +97,7 @@ def add_route_column(df: pd.DataFrame) -> pd.DataFrame:
     """
     check_columns(df, [COL_DEPARTURE, COL_ARRIVAL])
     result = df.copy()
-    result[COL_ROUTE] = (
-        result[COL_DEPARTURE] + " → " + result[COL_ARRIVAL]
-    )
+    result[COL_ROUTE] = result[COL_DEPARTURE] + " → " + result[COL_ARRIVAL]
     return result
 
 
@@ -150,12 +146,8 @@ def compute_route_stats(
         )
     )
     services = stats["services"].where(stats["services"] > 0)
-    stats["delay_rate_15"] = (
-        100 * stats["trains_delayed_15"] / services
-    )
-    stats["cancellation_rate"] = (
-        100 * stats["cancellations"] / services
-    )
+    stats["delay_rate_15"] = 100 * stats["trains_delayed_15"] / services
+    stats["cancellation_rate"] = 100 * stats["cancellations"] / services
 
     enough_months = stats["months"] >= min_months
     enough_trains = stats["services"] >= min_trains
@@ -203,16 +195,10 @@ def seasonal_cause_shares(df: pd.DataFrame) -> pd.DataFrame:
         df,
         [COL_DATE, COL_NB_ARRIVAL_DELAYS, *CAUSE_COLUMNS],
     )
-    months = pd.to_datetime(
-        df[COL_DATE], format="%Y-%m", errors="coerce"
-    )
+    months = pd.to_datetime(df[COL_DATE], format="%Y-%m", errors="coerce")
     seasons = months.dt.month.map(SEASONS)
     weights = df[COL_NB_ARRIVAL_DELAYS].clip(lower=0)
-    weighted = (
-        df[list(CAUSE_COLUMNS)]
-        .fillna(0)
-        .mul(weights, axis=0)
-    )
+    weighted = df[list(CAUSE_COLUMNS)].fillna(0).mul(weights, axis=0)
     totals = weighted.groupby(seasons).sum()
     shares = totals.div(weights.groupby(seasons).sum(), axis=0)
     return shares.rename(columns=CAUSE_COLUMNS).reindex(SEASON_ORDER)

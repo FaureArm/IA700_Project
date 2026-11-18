@@ -4,7 +4,6 @@ Depuis la racine du dépôt :
     uv run streamlit run src/ia700_project/streamlit_app.py
 """
 
-
 import streamlit as st
 
 from ia700_project.pages import (
@@ -23,10 +22,10 @@ TITLE = "Projet IA700"
 
 def main() -> None:
     """Configure the application and run the selected page"""
-
-    st.set_page_config(page_title="SNCF Regularity", page_icon="🚆", layout="wide")
+    st.set_page_config(
+        page_title="SNCF Regularity", page_icon="🚆", layout="wide"
+    )
     st.sidebar.title(TITLE)
-
 
     ## define navigation bar ##
     # perhaps could be done in a specific component
@@ -41,6 +40,7 @@ def main() -> None:
         position="top",
     )
     page.run()
+
 
 if __name__ == "__main__":
     main()
