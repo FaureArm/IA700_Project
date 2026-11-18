@@ -36,9 +36,11 @@ jobs:
             src/ia700_project/analysis.py \
             src/ia700_project/cleaning.py \
             src/ia700_project/routes_metrics.py \
+            src/ia700_project/dashboards.py \
             unit_tests/test_analysis.py \
             unit_tests/test_cleaning.py \
-            unit_tests/test_routes_metrics.py
+            unit_tests/test_routes_metrics.py \
+            unit_tests/test_dashboards.py
 
       - name: Check code formatting
         run: |
@@ -46,9 +48,11 @@ jobs:
             src/ia700_project/analysis.py \
             src/ia700_project/cleaning.py \
             src/ia700_project/routes_metrics.py \
+            src/ia700_project/dashboards.py \
             unit_tests/test_analysis.py \
             unit_tests/test_cleaning.py \
-            unit_tests/test_routes_metrics.py
+            unit_tests/test_routes_metrics.py \
+            unit_tests/test_dashboards.py
 
       - name: Run unit tests with coverage
         run: uv run pytest

@@ -1,5 +1,4 @@
-"""Create dashboards to be displayed by our steamlit app.
-"""
+"""Create dashboards to be displayed by our Streamlit app."""
 
 import pandas as pd
 import streamlit as st
@@ -9,13 +8,14 @@ from ia700_project.models import ComparisonSelection, TravelSelection
 
 
 def render_exploration_dashboard(selection: TravelSelection) -> None:
-    """Display the travel summary and historical analysis placeholders"""
+    """Display the travel summary and historical analysis placeholders."""
     render_travel_summary(selection)
 
     st.info(
-        "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste"
-        "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation"
-        "On peut probablement juste faire par mois au final"
+        "=> Ici, on affiche les résultats historiques de la sélection. "
+        "Pas une prédiction : on présente les retards moyens et les taux "
+        "d'annulation observés aux mêmes périodes les années précédentes. "
+        "On pourrait éventuellement regrouper les résultats par mois."
     )
 
     render_summary_metrics()
@@ -33,26 +33,32 @@ def render_exploration_dashboard(selection: TravelSelection) -> None:
 
 
 def render_ranking(selection: ComparisonSelection) -> None:
+    """Display the ranking for the selected comparison."""
     st.subheader(f"Classement · {selection.entity}")
     st.caption(
         f"{selection.metric} · {selection.top_n} résultats maximum · "
         f"minimum {selection.min_volume} circulations prévues"
     )
     st.info(
-        "Afficher ici le classement et les volumes associés à la recherche du sidebar"
+        "Afficher ici le classement et les volumes associés "
+        "à la recherche du sidebar."
     )
 
 
-def render_comparison_time_evolution(selection: ComparisonSelection) -> None:
+def render_comparison_time_evolution(
+    selection: ComparisonSelection,
+) -> None:
+    """Display the time evolution of the selected comparison."""
     st.subheader("Comparer les évolutions")
     st.info(
-        " Ici, montrer une évolution temporelle de nos variables séléctionnées "
-        " montrer évolution pour tous les candidats du top ? eg si on choisit le nbre de résultats"
-        "valant 10, seuelement 10 sur graphes? ou tous? prendre en compte nombre minimal de vilume?"
+        "Ici, montrer une évolution temporelle des variables sélectionnées. "
+        "Faut-il afficher tous les candidats ou seulement ceux du top ? "
+        "Faut-il prendre en compte le volume minimal de circulations ?"
     )
 
 
 def render_travel_summary(selection: TravelSelection) -> None:
+    """Display the selected journey and its travel dates."""
     st.subheader(f"{selection.departure} → {selection.arrival}")
     st.write(
         f"Voyage du {selection.travel_start:%d/%m/%Y} "
@@ -61,6 +67,7 @@ def render_travel_summary(selection: TravelSelection) -> None:
 
 
 def render_summary_metrics() -> None:
+    """Display the historical summary metrics."""
     st.subheader("Que montre l’historique ?")
 
     volume, cancellations, delays, duration = st.columns(4)
@@ -76,18 +83,22 @@ def render_summary_metrics() -> None:
 
 
 def render_exploration_time_evolution() -> None:
+    """Display the historical evolution of delays and cancellations."""
     st.subheader("Évolution dans le temps")
-    st.info("afficher graphs d'évolutions de retard et annulation")
+    st.info("Afficher les graphiques d'évolution des retards et annulations.")
 
 
 def render_delay_causes() -> None:
+    """Display the distribution of delay causes."""
     st.subheader("Causes des retards")
     st.info(
-        "Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos"
+        "Afficher la répartition des causes en grandes catégories, "
+        "selon les informations disponibles."
     )
 
 
 def render_comparison_dashboard(selection: ComparisonSelection) -> None:
+    """Display the ranking and time evolution of a comparison."""
     render_ranking(selection)
     render_comparison_time_evolution(selection)
 
@@ -96,14 +107,13 @@ def render_comparison_dashboard(selection: ComparisonSelection) -> None:
 
 
 def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
-    """Small dashboard showing basic metrics
-    through three columns.
-    NB: we spam try excepts, not very elegant but foolproof i suppose
+    """Display basic dashboard metrics.
+
+    The metrics are displayed through three columns.
 
     Args:
-        liaison_count (int): _description_
-        station_count (int): _description_
-        latest_month (str): _description_
+        df: Optional DataFrame containing the data used to compute
+            the dashboard metrics.
     """
     liaisons_col, stations_col, latest_month_col = st.columns(3)
     if df is None or df.empty:
@@ -113,7 +123,7 @@ def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
             0,
             0,
             0,
-        )  # TODO: compute these metrics from df, maybe in a separate function to be reused in the sidebar?
+        )  # TODO: Compute these metrics from df in a reusable function.
 
     liaisons_col, stations_col, latest_month_col = st.columns(3)
     try:
@@ -137,11 +147,7 @@ def render_network_map() -> None:
 
 
 def render_overview_dashboard() -> None:
-    """Acts as a global entry point for different
-    components to be shown on the main page
-    """
+    """Display the overview dashboard components."""
     df = None
-    render_overview_metrics(
-        df
-    )  # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
-    render_network_map()  # to render the map with overlay
+    render_overview_metrics(df)
+    render_network_map()

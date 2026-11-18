@@ -50,6 +50,7 @@ addopts = [
     "--cov=ia700_project.analysis",
     "--cov=ia700_project.cleaning",
     "--cov=ia700_project.routes_metrics",
+    "--cov=ia700_project.dashboards",
     "--cov-report=term-missing",
     "--cov-fail-under=90"
 ]
