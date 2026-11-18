@@ -45,5 +45,11 @@ select = ["E", "W", "F", "D", "I"]
 convention = "google"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--cov=ia700_project --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["unit_tests"]
+addopts = [
+    "--cov=ia700_project.analysis",
+    "--cov=ia700_project.cleaning",
+    "--cov=ia700_project.routes_metrics",
+    "--cov-report=term-missing",
+    "--cov-fail-under=90"
+]
