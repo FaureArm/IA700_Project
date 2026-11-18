@@ -7,27 +7,58 @@ import pandas as pd
 from ia700_project.models import TravelSelection
 from ia700_project.constants import CANCELLED, DELAY, PLANNED
 
+### Main Page ###
 
-def monthly_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrège les annulations et pondère le retard par les trains ayant circulé."""
-    prepared = df.assign(
-        circulated=df[PLANNED] - df[CANCELLED],
-        delay_minutes=df[DELAY] * (df[PLANNED] - df[CANCELLED]),
-    )
-    monthly = (
-        prepared.groupby("Date")[
-            [PLANNED, CANCELLED, "circulated", "delay_minutes"]
-        ]
-        .sum()
-        .sort_index()
-    )
-    monthly["Retard moyen à l'arrivée (min)"] = monthly[
-        "delay_minutes"
-    ] / monthly["circulated"].replace(0, float("nan"))
-    monthly["Taux d'annulation (%)"] = (
-        monthly[CANCELLED] / monthly[PLANNED] * 100
-    )
-    return monthly
+def compute_overview_summary(data: pd.DataFrame) -> pd.DataFrame:
+    """Return route count, unique station count and latest observed month."""
+    if data.empty:
+        return pd.DataFrame(
+            columns=["route_count", "station_count", "latest_month"]
+        )
+
+    return pd.DataFrame([{
+        "route_count": len(
+            data[["gare_depart", "gare_arrivee"]].dropna().drop_duplicates()
+        ),
+        "station_count": pd.concat(
+            [data["gare_depart"], data["gare_arrivee"]]
+        ).nunique(),
+        "latest_month": data["date"].max(),
+    }])
+
+
+### Exploration Page ###
+
+def scheduled_trains_count(data: pd.DataFrame, selection: TravelSelection) -> int | None:
+    return None
+
+
+def cancellation_rate(data: pd.DataFrame, selection: TravelSelection) -> float | None:
+    return None
+
+
+def delay_rate(data: pd.DataFrame, selection: TravelSelection) -> float | None:
+    return None
+
+
+def avg_delay_length(data: pd.DataFrame, selection: TravelSelection) -> float | None:
+    return None
+
+
+def time_chart(data: pd.DataFrame, selection: TravelSelection) -> pd.DataFrame | None:
+    """_returns:
+            month
+            cancellation_rate_pct
+            arrival_delay_rate_pct
+            mean_arrival_delay_minutes
+    """
+    return None
+
+
+def cause_of_delays_ranking(data: pd.DataFrame, selection: TravelSelection) -> pd.DataFrame | None:
+    return None
+
+
 
 def compute_route_seasonal_summary(
     data: pd.DataFrame, selection: TravelSelection
@@ -49,6 +80,28 @@ def compute_route_seasonal_summary(
         the selection.
     """
     return None
+
+
+def monthly_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """Agrège les annulations et pondère le retard par les trains ayant circulé."""
+    prepared = df.assign(
+        circulated=df[PLANNED] - df[CANCELLED],
+        delay_minutes=df[DELAY] * (df[PLANNED] - df[CANCELLED]),
+    )
+    monthly = (
+        prepared.groupby("Date")[
+            [PLANNED, CANCELLED, "circulated", "delay_minutes"]
+        ]
+        .sum()
+        .sort_index()
+    )
+    monthly["Retard moyen à l'arrivée (min)"] = monthly[
+        "delay_minutes"
+    ] / monthly["circulated"].replace(0, float("nan"))
+    monthly["Taux d'annulation (%)"] = (
+        monthly[CANCELLED] / monthly[PLANNED] * 100
+    )
+    return monthly
 
 def compute_route_monthly_history(
     data: pd.DataFrame, selection: TravelSelection
@@ -90,19 +143,3 @@ def compute_route_delay_causes(
     """
     return None
 
-def compute_overview_summary(data: pd.DataFrame) -> pd.DataFrame:
-    """Return route count, unique station count and latest observed month."""
-    if data.empty:
-        return pd.DataFrame(
-            columns=["route_count", "station_count", "latest_month"]
-        )
-
-    return pd.DataFrame([{
-        "route_count": len(
-            data[["gare_depart", "gare_arrivee"]].dropna().drop_duplicates()
-        ),
-        "station_count": pd.concat(
-            [data["gare_depart"], data["gare_arrivee"]]
-        ).nunique(),
-        "latest_month": data["date"].max(),
-    }])

@@ -8,9 +8,12 @@ from ia700_project.map_view import render_tgv_map
 from ia700_project.models import ComparisonSelection, TravelSelection
 from ia700_project.indicators import (
     compute_overview_summary,
-    compute_route_delay_causes,
-    compute_route_monthly_history,
-    compute_route_seasonal_summary,
+    scheduled_trains_count,
+    cancellation_rate,
+    delay_rate,
+    avg_delay_length,
+    time_chart,
+    cause_of_delays_ranking,
 )
 
 ### MAIN PAGE ###
@@ -65,20 +68,17 @@ def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
 def render_exploration_dashboard(
     data: pd.DataFrame, selection: TravelSelection
 ) -> None:
-    """Docsting todo."""
     render_travel_summary(selection)
-
-    seasonal_summary = compute_route_seasonal_summary(data, selection)
-    render_summary_metrics(seasonal_summary)
+    render_summary_metrics(data, selection)
 
     left, right = st.columns(2)
 
     with left:
-        monthly_history = compute_route_monthly_history(data, selection)
+        monthly_history = time_chart(data, selection)
         render_exploration_time_evolution(monthly_history)
 
     with right:
-        delay_causes = compute_route_delay_causes(data, selection)
+        delay_causes = cause_of_delays_ranking(data, selection)
         render_delay_causes(delay_causes)
 
     with st.expander("Comprendre les résultats"):
@@ -96,23 +96,30 @@ def render_travel_summary(selection: TravelSelection) -> None:
         f"au {selection.travel_end:%d/%m/%Y}"
     )
 
-def render_summary_metrics(scheduled_trains_count: int | None) -> None:
+def render_summary_metrics(data: pd.DataFrame, selection: TravelSelection) -> None:
     st.subheader("Que montre l’historique ?")
 
+    train_count = scheduled_trains_count(data, selection)
+    cancellation_pct = cancellation_rate(data, selection)
+    delay_pct = delay_rate(data, selection)
+    average_delay_minutes = avg_delay_length(data, selection)
+
     volume, cancellations, delays, duration = st.columns(4)
-    if scheduled_trains_count is None:
-        volume_label = "Indisponible"
-    else:
-        volume_label = f"{scheduled_trains_count:,}".replace(",", " ")
-
-    volume.metric("Nombres de circulations enregistrées", volume_label)
-    cancellations.metric("Taux d’annulation", "—")
-    delays.metric("Taux de retard à l’arrivée", "—")
-    duration.metric("Retard moyen à l’arrivée", "—")
-
-    st.caption(
-        "TODO: indicateurs à calculer "
-        "-> décrire les observations historiques de cette liaison"
+    volume.metric(
+        "Circulations prévues",
+        f"{train_count:,}".replace(",", " ") if pd.notna(train_count) else "Indisponible",
+    )
+    cancellations.metric(
+        "Taux d’annulation",
+        f"{cancellation_pct:.2f} %" if pd.notna(cancellation_pct) else "Indisponible",
+    )
+    delays.metric(
+        "Taux de retard à l’arrivée",
+        f"{delay_pct:.2f} %" if pd.notna(delay_pct) else "Indisponible",
+    )
+    duration.metric(
+        "Retard moyen à l’arrivée",
+        f"{average_delay_minutes:.1f} min" if pd.notna(average_delay_minutes) else "Indisponible",
     )
 
 def render_exploration_time_evolution(monthly_history: pd.DataFrame | None) -> None:
@@ -122,8 +129,26 @@ def render_exploration_time_evolution(monthly_history: pd.DataFrame | None) -> N
     if monthly_history is None or monthly_history.empty :
         st.info("Aucun historique mensuel disponible pour cette liaison.")
         return
-    #TODO replace with chart
-    st.dataframe(monthly_history, hide_index=True)
+    chart_data = monthly_history.sort_values("month").set_index("month")
+
+    st.line_chart(
+        chart_data[
+            ["cancellation_rate_pct", "arrival_delay_rate_pct"]
+        ].rename(columns={
+            "cancellation_rate_pct": "Annulations",
+            "arrival_delay_rate_pct": "Retards à l’arrivée",
+        }),
+        x_label="Mois",
+        y_label="Taux (%)",
+    )
+
+    st.line_chart(
+        chart_data[["mean_arrival_delay_minutes"]].rename(columns={
+            "mean_arrival_delay_minutes": "Retard moyen à l’arrivée",
+        }),
+        x_label="Mois",
+        y_label="Minutes",
+    )
 
 def render_delay_causes(delay_causes: pd.DataFrame | None) -> None:
     """Display the delay causes returned by the calculation."""
