@@ -89,6 +89,28 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
     return selection
 
 
+def map_route_sidebar(routes: dict[str, str]) -> str | None:
+    """Return the selected route ID, else None to show all liaisons"""
+    return st.sidebar.selectbox(
+        "Liaison sur la carte",
+        routes,
+        index=None,
+        format_func=routes.__getitem__,
+        placeholder="Toutes les liaisons",
+        key="map_route",
+    )
+
+
+def map_metric_sidebar(metrics: dict[str, str]) -> str:
+    """Return the metric key used to colour the overview map"""
+    return st.sidebar.radio(
+        "Indicateur de la carte",
+        list(metrics),
+        format_func=metrics.__getitem__,
+        key="map_metric",
+    )
+
+
 def comparison_sidebar() -> ComparisonSelection:
     """Render comparison selected metrics and return the selected options"""
     st.sidebar.header("Votre comparaison")

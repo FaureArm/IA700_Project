@@ -4,6 +4,7 @@
 import pandas as pd
 import streamlit as st
 
+from ia700_project.map_view import render_tgv_map
 from ia700_project.models import ComparisonSelection, TravelSelection
 
 
@@ -130,13 +131,9 @@ def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
 
 
 def render_network_map() -> None:
+    """Add the network heading and interactive map to the overview."""
     st.subheader("Le réseau en un regard")
-
-    st.map(
-        pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
-        zoom=4,
-    )
-    st.caption("Petite caption à completer plus tard")
+    render_tgv_map()
 
 
 def render_overview_dashboard() -> None:
