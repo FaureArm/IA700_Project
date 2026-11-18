@@ -1,0 +1,54 @@
+
+name: CI
+
+on:
+  push:
+    branches:
+      - feature/tests-ci
+
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  tests:
+    name: Tests and Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run Ruff lint checks
+        run: |
+          uv run ruff check \
+            src/ia700_project/analysis.py \
+            src/ia700_project/cleaning.py \
+            src/ia700_project/routes_metrics.py \
+            unit_tests/test_analysis.py \
+            unit_tests/test_cleaning.py \
+            unit_tests/test_routes_metrics.py
+
+      - name: Check code formatting
+        run: |
+          uv run ruff format --check \
+            src/ia700_project/analysis.py \
+            src/ia700_project/cleaning.py \
+            src/ia700_project/routes_metrics.py \
+            unit_tests/test_analysis.py \
+            unit_tests/test_cleaning.py \
+            unit_tests/test_routes_metrics.py
+
+      - name: Run unit tests with coverage
+        run: uv run pytest
