@@ -1,4 +1,3 @@
-
 """Unit tests for the dashboards module."""
 
 from datetime import datetime
@@ -82,9 +81,7 @@ def test_render_comparison_time_evolution(
     """Test the comparison time evolution section."""
     dashboards.render_comparison_time_evolution(comparison_selection)
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Comparer les évolutions"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Comparer les évolutions")
     mock_streamlit.info.assert_called_once()
 
 
@@ -114,9 +111,7 @@ def test_render_exploration_time_evolution(mock_streamlit):
     """Test the exploration time evolution section."""
     dashboards.render_exploration_time_evolution()
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Évolution dans le temps"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Évolution dans le temps")
     mock_streamlit.info.assert_called_once()
 
 
@@ -134,9 +129,7 @@ def test_render_exploration_dashboard(mock_streamlit, travel_selection):
 
     mock_streamlit.subheader.assert_any_call("Paris → Lyon")
     assert mock_streamlit.info.called
-    mock_streamlit.expander.assert_called_once_with(
-        "Comprendre les résultats"
-    )
+    mock_streamlit.expander.assert_called_once_with("Comprendre les résultats")
 
 
 def test_render_comparison_dashboard(
@@ -229,9 +222,7 @@ def test_render_network_map(mock_streamlit, monkeypatch):
 
     dashboards.render_network_map()
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Le réseau en un regard"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Le réseau en un regard")
     mock_map.assert_called_once()
 
 
