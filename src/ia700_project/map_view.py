@@ -1,4 +1,3 @@
-
 """Render the interactive railway map and its traffic indicators."""
 
 import gzip
@@ -13,7 +12,6 @@ from ia700_project.data import DATA_PATH
 from ia700_project.map_rates import load_map_rates
 from ia700_project.sidebar import map_metric_sidebar, map_route_sidebar
 
-
 # Constants
 MAP_DATA = Path(__file__).resolve().parents[2] / "data" / "map"
 
@@ -25,7 +23,7 @@ MAP_METRICS = {
 
 HOVER_METRICS = ("delay", "cancellation")
 
-# Keep the green, amber, and red anchors unchanged when filtering the map.
+# Green, amber and red anchors stay the same when we filter the map.
 RATE_SCALES = {
     "disruption": (0.15, 0.23, 0.35),
     "delay": (0.12, 0.20, 0.30),
@@ -48,35 +46,32 @@ def load_map_data(
         modified_at: File timestamps used to refresh the cache after a rebuild.
 
     Returns:
-        Routes containing drawable paths and the coverage counts.
+        Routes with drawable paths and the coverage counts.
     """
-    # Load the prepared map data.
-    # This data is generated once and does not need to be rebuilt at runtime.
     report = json.loads(
         (directory / "report.json").read_text(encoding="utf-8")
     )
-    payload = gzip.decompress(
-        (directory / "liaisons.geojson.gz").read_bytes()
-    )
+    payload = gzip.decompress((directory / "liaisons.geojson.gz").read_bytes())
 
     routes = []
     for feature in json.loads(payload)["features"]:
         geometry = feature["geometry"]
         coordinates = geometry["coordinates"]
 
-        # Give Pydeck separate lines for each route.
+        # Give Pydeck a separate list of paths for each railway route.
         paths = (
             coordinates
             if geometry["type"] == "MultiLineString"
             else [coordinates]
         )
+
         routes.append({**feature["properties"], "paths": paths})
 
     return routes, report["coverage"]
 
 
 def percentage_label(rate: float) -> str:
-    """Format a fraction as a percentage for the user interface."""
+    """Format a fraction as a percentage for the UI."""
     return f"{100 * rate:.1f}".replace(".", ",") + " %"
 
 
@@ -84,7 +79,7 @@ def rate_color(
     rate: float | None,
     scale: tuple[float, float, float],
 ) -> tuple[int, ...]:
-    """Blend the three rate colors or return black for a missing rate."""
+    """Blend between the three colours, or return black for a missing rate."""
     if rate is None:
         return MISSING_COLOR
 
@@ -118,13 +113,12 @@ def route_tooltip(
         values = rates.get((departure, arrival), {})
 
         if any(key in values for key in HOVER_METRICS):
-            metric_lines = [
-                (
-                    f"{MAP_METRICS[key]} "
-                    f"{percentage_label(values[key]) if key in values else '—'}"
-                )
-                for key in HOVER_METRICS
-            ]
+            metric_lines = []
+
+            for key in HOVER_METRICS:
+                value = percentage_label(values[key]) if key in values else "—"
+                metric_lines.append(f"{MAP_METRICS[key]} {value}")
+
             lines.append(" · ".join(metric_lines))
         else:
             lines.append("Données indisponibles")
@@ -136,7 +130,7 @@ def render_rate_legend(
     scale: tuple[float, float, float],
     has_rates: bool,
 ) -> None:
-    """Display the color legend for the selected map indicator."""
+    """Display the colour legend for the selected indicator."""
     if not has_rates:
         st.caption("Noir · données indisponibles pour cet indicateur.")
         return
@@ -145,7 +139,7 @@ def render_rate_legend(
         (
             '<span style="white-space:nowrap">'
             '<span aria-hidden="true" style="display:inline-block;'
-            f'width:.65rem;height:.65rem;border-radius:50%;background:rgb{color}'
+            f"width:.65rem;height:.65rem;border-radius:50%;background:rgb{color}"
             f'"></span> {prefix}{percentage_label(rate)}</span>'
         )
         for rate, color, prefix in zip(
@@ -163,23 +157,23 @@ def render_rate_legend(
 
 
 def render_tgv_map() -> None:
-    """Load the railway data and display the filtered interactive map."""
-    # Load the prepared map data.
+    """Join saved paths to their rates and draw the filtered overview map."""
+    # Load the prepared map.
     try:
         files = (
             MAP_DATA / "liaisons.geojson.gz",
             MAP_DATA / "report.json",
         )
-        modified_at = tuple(path.stat().st_mtime_ns for path in files)
-        routes, _ = load_map_data(MAP_DATA, modified_at)
-
+        routes, _ = load_map_data(
+            MAP_DATA,
+            tuple(path.stat().st_mtime_ns for path in files),
+        )
     except FileNotFoundError:
         st.info(
             "Données de la carte absentes. "
             "Consultez data/map/README.md pour les générer."
         )
         return
-
     except (OSError, ValueError, KeyError, EOFError, ZlibError):
         st.warning(
             "Données de la carte illisibles. "
@@ -196,14 +190,11 @@ def render_tgv_map() -> None:
         "IGN Espagne et ERA."
     )
 
-    # Load the selected metric, route, and corresponding rates.
+    # Sidebar and rates.
     metric = map_metric_sidebar(MAP_METRICS)
-
     selected = map_route_sidebar(
         {
-            route["route_id"]: (
-                f"{route['departure']} → {route['arrival']}"
-            )
+            route["route_id"]: (f"{route['departure']} → {route['arrival']}")
             for route in routes
         }
     )
@@ -216,18 +207,18 @@ def render_tgv_map() -> None:
     except (OSError, ValueError):
         rates = {}
 
+    # Use the same station labels as the CSV.
     mapped_rates = [
         rates.get((route["departure"], route["arrival"]), {})
         for route in routes
     ]
-    scale = RATE_SCALES[metric]
-    pairs = {
-        (route["departure"], route["arrival"])
-        for route in routes
-    }
 
-    # Draw overlapping paths in order of increasing rate.
+    scale = RATE_SCALES[metric]
+    pairs = {(route["departure"], route["arrival"]) for route in routes}
+
+    # If paths overlap, draw the higher rate on top.
     visible = []
+
     sorted_routes = sorted(
         zip(routes, mapped_rates),
         key=lambda item: item[1].get(metric, -1),
@@ -241,7 +232,11 @@ def render_tgv_map() -> None:
         tooltip = route_tooltip(route, pairs, rates)
 
         visible.extend(
-            {"path": path, "color": color, "tooltip": tooltip}
+            {
+                "path": path,
+                "color": color,
+                "tooltip": tooltip,
+            }
             for path in route["paths"]
         )
 
@@ -294,8 +289,7 @@ def render_tgv_map() -> None:
         },
     )
 
-    # Align the tooltip overlay with the chart and show a pointer
-    # while a route is selected.
+    # Align the tooltip overlay with the chart.
     with st.container(key="tgv_map_frame"):
         st.html(
             """
@@ -307,17 +301,16 @@ def render_tgv_map() -> None:
                 }
                 .st-key-tgv_map_frame .stDeckGlJsonChart:has(
                     .tgv-route-tooltip[style*="display: block"]
-                )
-                .deck-events-root:not(:active),
+                ) .deck-events-root:not(:active),
                 .st-key-tgv_map_frame .stDeckGlJsonChart:has(
                     .tgv-route-tooltip[style*="display: block"]
-                )
-                .deck-events-root:not(:active) canvas {
+                ) .deck-events-root:not(:active) canvas {
                     cursor: pointer !important;
                 }
             </style>
             """
         )
+
         st.pydeck_chart(
             deck,
             key="tgv_map",

@@ -38,11 +38,13 @@ jobs:
             src/ia700_project/routes_metrics.py \
             src/ia700_project/dashboards.py \
             src/ia700_project/map_rates.py \
+            src/ia700_project/map_view.py \
             unit_tests/test_analysis.py \
             unit_tests/test_cleaning.py \
             unit_tests/test_routes_metrics.py \
             unit_tests/test_dashboards.py \
-            unit_tests/test_map_rates.py
+            unit_tests/test_map_rates.py \
+            unit_tests/test_map_view.py
 
 
       - name: Check code formatting
@@ -53,11 +55,13 @@ jobs:
             src/ia700_project/routes_metrics.py \
             src/ia700_project/dashboards.py \
             src/ia700_project/map_rates.py \
+            src/ia700_project/map_view.py \
             unit_tests/test_analysis.py \
             unit_tests/test_cleaning.py \
             unit_tests/test_routes_metrics.py \
             unit_tests/test_dashboards.py \
-            unit_tests/test_map_rates.py
+            unit_tests/test_map_rates.py \
+            unit_tests/test_map_view.py
 
       - name: Run unit tests with coverage
         run: uv run pytest
