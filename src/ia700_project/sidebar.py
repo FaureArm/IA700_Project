@@ -1,35 +1,26 @@
-"""Detail the creation and handling of different
-kind of sidebars for
-streamlit app.
-"""
+"""Create and handle the different sidebars for the Streamlit application."""
 
 from datetime import date, timedelta
 
 import pandas as pd
 import streamlit as st
 
-from ia700_project.constants import (
-    ARRIVAL,
-    DEPARTURE,
-)
+from ia700_project.constants import ARRIVAL, DEPARTURE
 from ia700_project.models import ComparisonSelection, TravelSelection
 
 
 def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
-    """Render route and travel-date controls and return the selection
+    """Render route and travel-date controls and return the selection.
 
     Args:
-        df: Nonempty dataset containing departure and arrival stations
+        df: Nonempty dataset containing departure and arrival stations.
 
     Returns:
-        Selected stations and travel dates
+        Selected stations and travel dates.
     """
     st.sidebar.header("Votre sélection")
 
-    # select departure and arrival stations ##
-
-    # we have a default selection, but otherwise we just
-    # use first in our lists
+    # Select departure and arrival stations.
     departures = sorted(df[DEPARTURE].unique().tolist())
     default_departure = "PARIS LYON"
 
@@ -60,9 +51,7 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
         key="arrival",
     )
 
-    ## Date selection ##
-    # calendar based to mimic traveling dates
-
+    # Select the travel period.
     today = date.today()
 
     travel_dates = st.sidebar.date_input(
@@ -79,18 +68,23 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
     travel_start, travel_end = travel_dates
 
-    selection = TravelSelection(
+    return TravelSelection(
         departure=departure,
         arrival=arrival,
         travel_start=travel_start,
         travel_end=travel_end,
     )
 
-    return selection
-
 
 def map_route_sidebar(routes: dict[str, str]) -> str | None:
-    """Return the selected route ID, else None to show all liaisons"""
+    """Return the selected route ID, or None to show all routes.
+
+    Args:
+        routes: Dictionary associating route IDs with display labels.
+
+    Returns:
+        Selected route ID, or None if no route is selected.
+    """
     return st.sidebar.selectbox(
         "Liaison sur la carte",
         routes,
@@ -102,7 +96,14 @@ def map_route_sidebar(routes: dict[str, str]) -> str | None:
 
 
 def map_metric_sidebar(metrics: dict[str, str]) -> str:
-    """Return the metric key used to colour the overview map"""
+    """Return the metric key used to colour the overview map.
+
+    Args:
+        metrics: Dictionary associating metric keys with display labels.
+
+    Returns:
+        Selected metric key.
+    """
     return st.sidebar.radio(
         "Indicateur de la carte",
         list(metrics),
@@ -112,7 +113,11 @@ def map_metric_sidebar(metrics: dict[str, str]) -> str:
 
 
 def comparison_sidebar() -> ComparisonSelection:
-    """Render comparison selected metrics and return the selected options"""
+    """Render comparison controls and return the selected options.
+
+    Returns:
+        Selected comparison entity, metric, result count and minimum volume.
+    """
     st.sidebar.header("Votre comparaison")
 
     entity = st.sidebar.selectbox(
@@ -147,7 +152,7 @@ def comparison_sidebar() -> ComparisonSelection:
 
     st.sidebar.caption(
         "Ce seuil permettra d’écarter les résultats "
-        "reposant sur un faible nombre de circulations"
+        "reposant sur un faible nombre de circulations."
     )
 
     return ComparisonSelection(
