@@ -27,4 +27,23 @@ build-backend = "uv_build"
 dev = [
     "ipykernel>=7.3.0",
     "jupyter>=1.1.1",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.5",
 ]
+
+[tool.ruff]
+line-length = 79
+src = ["src"]
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+# E/W = PEP 8, F = erreurs (imports inutilisés...), D = docstrings, I = tri des imports
+select = ["E", "W", "F", "D", "I"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=ia700_project --cov-report=term-missing --cov-fail-under=90"
