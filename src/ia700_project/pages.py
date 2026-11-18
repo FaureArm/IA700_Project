@@ -9,14 +9,14 @@ from ia700_project.dashboards import (
     render_exploration_dashboard,
     render_overview_dashboard,
 )
-from ia700_project.data import DATA_PATH, load_data
+
 from ia700_project.sidebar import (
     comparison_sidebar,
     date_itinerary_sidebar,
 )
 
 
-def main_page():
+def main_page(data: pd.DataFrame) -> None:
     st.title("Accueil")
     st.markdown(
         "Découvrez la régularité des liaisons TGV, "
@@ -24,10 +24,10 @@ def main_page():
     )
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
 
-    render_overview_dashboard()
+    render_overview_dashboard(data)
 
 
-def exploration_page():
+def exploration_page(data: pd.DataFrame) -> None:
     st.title("Explorer une liaison")
     st.markdown(
         "Sélectionnez une liaison et une période pour consulter "
@@ -35,33 +35,14 @@ def exploration_page():
     )
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
 
-    try:
-        df = load_data(str(DATA_PATH), DATA_PATH.stat().st_mtime_ns) #st_mtime_ns is the time of last modification of the file
-    except FileNotFoundError:
-        st.error("Le jeu de données SNCF est absent.")
-        st.info(
-            "Placez regularite-mensuelle-tgv-aqst.csv dans le dossier data/ "
-            "à la racine du projet. Ce fichier doit aussi être disponible sur l'hébergeur."
-        )
-        st.stop()
-    except (OSError, ValueError, pd.errors.ParserError) as error:
-        st.error(f"Impossible de lire les données SNCF : {error}")
-        st.stop()
-
-    if df.empty:
-        st.warning(
-            "Le fichier ne contient aucune ligne exploitable pour ces indicateurs."
-        )
-        st.stop()
-
     ### sidebar ###
-    selection = date_itinerary_sidebar(df)
+    selection = date_itinerary_sidebar(data)
 
     ## main dashboard ##
-    render_exploration_dashboard(df, selection)
+    render_exploration_dashboard(data, selection)
 
 
-def comparison_page():
+def comparison_page(data: pd.DataFrame) -> None:
     """Page to show some global basic metrics,
     through rankings, volumes, evolutions, etc.
     """
@@ -74,8 +55,7 @@ def comparison_page():
     # returns type of comparison, metric, top_n, min_volume
     # for more details check in sidebar.py
     selection = comparison_sidebar()
-
-    render_comparison_dashboard(selection)
+    render_comparison_dashboard(data, selection)
 
 
 def methods_page():

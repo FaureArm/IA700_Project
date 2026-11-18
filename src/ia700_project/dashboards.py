@@ -12,7 +12,7 @@ from ia700_project.indicators import count_historical_scheduled_trains
 def render_exploration_dashboard(data: pd.DataFrame, selection: TravelSelection) -> None:
     """Display the travel summary and historical analysis placeholders"""
     render_travel_summary(selection)
-
+    #st.caption(f"Vérification · {len(data):,} observations reçues.")
     st.info(
         "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste"
         "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation"
@@ -96,7 +96,7 @@ def render_delay_causes() -> None:
     )
 
 
-def render_comparison_dashboard(selection: ComparisonSelection) -> None:
+def render_comparison_dashboard(data: pd.DataFrame, selection: ComparisonSelection) -> None:
     render_ranking(selection)
     render_comparison_time_evolution(selection)
 
@@ -145,12 +145,10 @@ def render_network_map() -> None:
     render_tgv_map()
 
 
-def render_overview_dashboard() -> None:
+def render_overview_dashboard(data: pd.DataFrame) -> None:
     """Acts as a global entry point for different
     components to be shown on the main page
     """
-    df = None
-    render_overview_metrics(
-        df
-    )  # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
+    #st.caption(f"Vérification · {len(data):,} observations reçues.")
+    render_overview_metrics(data)  # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
     render_network_map()  # to render the map with overlay
