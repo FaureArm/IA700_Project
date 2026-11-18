@@ -14,11 +14,10 @@ from ia700_project.constants import (
 )
 
 DATA_PATH = (
-    Path(__file__).resolve().parents[2] # adjust the path as needed
+    Path(__file__).resolve().parents[2]  # adjust the path as needed
     / "data"
     / "regularite-mensuelle-tgv-aqst.csv"
 )
-
 
 
 @st.cache_data

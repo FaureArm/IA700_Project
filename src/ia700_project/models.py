@@ -13,11 +13,14 @@ class TravelSelection:
     travel_start: date
     travel_end: date
 
+
 class LoadedData:
     """class to hold and handle loaded data"""
 
     # NB: this is more of a placeholder for now, will change in the future
-    def __init__(self, data: pd.DataFrame, excluded_rows: int, source: str) -> None:
+    def __init__(
+        self, data: pd.DataFrame, excluded_rows: int, source: str
+    ) -> None:
         self.data_ = data
         self.excluded_rows_ = excluded_rows
         self.source_ = source

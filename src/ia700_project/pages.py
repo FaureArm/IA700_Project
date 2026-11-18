@@ -1,5 +1,4 @@
-"""
-Create pages to host dashboards
+"""Create pages to host dashboards
 """
 
 import pandas as pd
@@ -26,6 +25,7 @@ def main_page():
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
 
     render_overview_dashboard()
+
 
 def exploration_page():
     st.title("Explorer une liaison")
@@ -60,9 +60,9 @@ def exploration_page():
     selection = date_itinerary_sidebar(df)
     render_exploration_dashboard(selection)
 
+
 def comparison_page():
-    """
-    Page to show some global basic metrics,
+    """Page to show some global basic metrics,
     through rankings, volumes, evolutions, etc.
     """
     st.title("Comparer les liaisons")
@@ -75,8 +75,8 @@ def comparison_page():
     # for more details check in sidebar.py
     selection = comparison_sidebar()
 
-
     render_comparison_dashboard(selection)
+
 
 def methods_page():
     st.title("Données et méthodes")
