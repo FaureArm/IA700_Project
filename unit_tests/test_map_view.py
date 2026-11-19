@@ -2,6 +2,8 @@
 
 import gzip
 import json
+from contextlib import nullcontext
+from types import SimpleNamespace
 
 from ia700_project import map_view
 
@@ -54,10 +56,8 @@ def test_load_map_data_reads_and_decompresses_geojson(tmp_path) -> None:
 
     assert len(routes) == 2
     assert coverage == {"routes": 2}
-
     assert routes[0]["route_id"] == "route_1"
     assert routes[0]["paths"] == [[[2.0, 48.0], [4.0, 45.0]]]
-
     assert routes[1]["route_id"] == "route_2"
     assert routes[1]["paths"] == [
         [[3.0, 50.0], [4.0, 49.0]],
@@ -178,7 +178,7 @@ def test_route_tooltip_handles_missing_metric() -> None:
 
 
 def test_route_tooltip_does_not_duplicate_loop_route() -> None:
-    """Check that a route returning to the same station appears once."""
+    """Check that a loop route appears only once."""
     route = {
         "departure": "Paris",
         "arrival": "Paris",
@@ -198,7 +198,7 @@ def test_render_rate_legend_without_rates(monkeypatch) -> None:
     monkeypatch.setattr(
         map_view.st,
         "caption",
-        lambda message: messages.append(message),
+        lambda content: messages.append(content),
     )
 
     map_view.render_rate_legend(
@@ -231,3 +231,279 @@ def test_render_rate_legend_with_rates(monkeypatch) -> None:
     assert "20,0 %" in html_content[0]
     assert "30,0 %" in html_content[0]
     assert "données indisponibles" in html_content[0]
+
+
+def test_render_tgv_map_handles_missing_files(monkeypatch) -> None:
+    """Check that missing map files display an information message."""
+    messages = []
+
+    def raise_missing_file(*args, **kwargs):
+        raise FileNotFoundError
+
+    monkeypatch.setattr(
+        map_view,
+        "load_map_data",
+        raise_missing_file,
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "info",
+        lambda message: messages.append(message),
+    )
+
+    map_view.render_tgv_map()
+
+    assert messages == ["Données de la carte absentes."]
+
+
+def test_render_tgv_map_handles_unreadable_files(monkeypatch) -> None:
+    """Check that unreadable map files display a warning."""
+    messages = []
+
+    def raise_invalid_data(*args, **kwargs):
+        raise ValueError
+
+    monkeypatch.setattr(
+        map_view,
+        "load_map_data",
+        raise_invalid_data,
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "warning",
+        lambda message: messages.append(message),
+    )
+
+    map_view.render_tgv_map()
+
+    assert messages == ["Données de la carte illisibles."]
+
+
+def test_render_tgv_map_returns_when_no_routes(monkeypatch) -> None:
+    """Check that map rendering stops when there are no routes."""
+    messages = []
+
+    monkeypatch.setattr(
+        map_view,
+        "load_map_data",
+        lambda *args: ([], {}),
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "caption",
+        lambda message: messages.append(message),
+    )
+
+    map_view.render_tgv_map()
+
+    assert messages == []
+
+
+def test_render_tgv_map_draws_routes(monkeypatch) -> None:
+    """Check that routes are prepared and rendered with Pydeck."""
+    routes = [
+        {
+            "route_id": "route_1",
+            "departure": "Paris",
+            "arrival": "Lyon",
+            "paths": [[[2.0, 48.0], [4.0, 45.0]]],
+        },
+        {
+            "route_id": "route_2",
+            "departure": "Lyon",
+            "arrival": "Paris",
+            "paths": [[[4.0, 45.0], [2.0, 48.0]]],
+        },
+    ]
+    captured = {}
+
+    monkeypatch.setattr(
+        map_view,
+        "load_map_data",
+        lambda *args: (routes, {}),
+    )
+    monkeypatch.setattr(
+        map_view,
+        "load_map_rates",
+        lambda *args: {
+            ("Paris", "Lyon"): {"delay": 0.10},
+            ("Lyon", "Paris"): {"delay": 0.20},
+        },
+    )
+    monkeypatch.setattr(
+        map_view,
+        "map_metric_sidebar",
+        lambda metrics: "delay",
+    )
+    monkeypatch.setattr(
+        map_view,
+        "map_route_sidebar",
+        lambda options: None,
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "caption",
+        lambda message: None,
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "html",
+        lambda content: None,
+    )
+    monkeypatch.setattr(
+        map_view,
+        "render_rate_legend",
+        lambda scale, has_rates: captured.update(legend=(scale, has_rates)),
+    )
+
+    class FakeLayer:
+        def __init__(self, layer_type, **kwargs):
+            self.layer_type = layer_type
+            self.kwargs = kwargs
+
+    class FakeDeck:
+        def __init__(self, **kwargs):
+            captured["deck"] = kwargs
+
+    class FakeViewState:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    monkeypatch.setattr(
+        map_view.pdk,
+        "Layer",
+        FakeLayer,
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "Deck",
+        FakeDeck,
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "ViewState",
+        FakeViewState,
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "map_styles",
+        SimpleNamespace(LIGHT="light"),
+    )
+    monkeypatch.setattr(
+        map_view.pdk.types,
+        "String",
+        lambda value: value,
+    )
+
+    monkeypatch.setattr(
+        map_view.st,
+        "container",
+        lambda **kwargs: nullcontext(),
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "pydeck_chart",
+        lambda deck, **kwargs: captured.update(chart=(deck, kwargs)),
+    )
+
+    map_view.render_tgv_map()
+
+    assert captured["legend"] == (
+        map_view.RATE_SCALES["delay"],
+        True,
+    )
+    layers = captured["deck"]["layers"]
+    assert len(layers) == 2
+    assert layers[0].kwargs["id"] == "tgv-hit-area"
+    assert layers[1].kwargs["id"] == "tgv-routes"
+    assert len(layers[1].kwargs["data"]) == 2
+    assert captured["chart"][1]["key"] == "tgv_map"
+
+
+def test_render_tgv_map_handles_rate_loading_error(monkeypatch) -> None:
+    """Check that rendering continues when rate data cannot be loaded."""
+    routes = [
+        {
+            "route_id": "route_1",
+            "departure": "Paris",
+            "arrival": "Lyon",
+            "paths": [[[2.0, 48.0], [4.0, 45.0]]],
+        }
+    ]
+    captured = {}
+
+    monkeypatch.setattr(
+        map_view,
+        "load_map_data",
+        lambda *args: (routes, {}),
+    )
+    monkeypatch.setattr(
+        map_view,
+        "load_map_rates",
+        lambda *args: (_ for _ in ()).throw(OSError),
+    )
+    monkeypatch.setattr(
+        map_view,
+        "map_metric_sidebar",
+        lambda metrics: "delay",
+    )
+    monkeypatch.setattr(
+        map_view,
+        "map_route_sidebar",
+        lambda options: None,
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "caption",
+        lambda message: None,
+    )
+    monkeypatch.setattr(
+        map_view,
+        "render_rate_legend",
+        lambda scale, has_rates: captured.update(has_rates=has_rates),
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "html",
+        lambda content: None,
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "Layer",
+        lambda *args, **kwargs: SimpleNamespace(kwargs=kwargs),
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "Deck",
+        lambda **kwargs: captured.update(deck=kwargs),
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "ViewState",
+        lambda **kwargs: kwargs,
+    )
+    monkeypatch.setattr(
+        map_view.pdk,
+        "map_styles",
+        SimpleNamespace(LIGHT="light"),
+    )
+    monkeypatch.setattr(
+        map_view.pdk.types,
+        "String",
+        lambda value: value,
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "container",
+        lambda **kwargs: nullcontext(),
+    )
+    monkeypatch.setattr(
+        map_view.st,
+        "pydeck_chart",
+        lambda deck, **kwargs: captured.update(chart=(deck, kwargs)),
+    )
+
+    map_view.render_tgv_map()
+
+    assert captured["has_rates"] is False
+    assert len(captured["deck"]["layers"][1].kwargs["data"]) == 1
