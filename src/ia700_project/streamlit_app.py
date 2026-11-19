@@ -1,10 +1,11 @@
-"""Explore la régularité mensuelle des TGV avec Streamlit.
+"""Main file to start running our streamlit app.
 
-Depuis la racine du dépôt :
+Run from root of project :
     uv run streamlit run src/ia700_project/streamlit_app.py
 """
 
 import streamlit as st
+
 from ia700_project.data import DATA_PATH, load_data
 from ia700_project.pages import (
     comparison_page,
@@ -21,7 +22,7 @@ TITLE = "Projet IA700"
 
 
 def main() -> None:
-    """Configure the application and run the selected page"""
+    """Configure the application and run the selected page."""
     st.set_page_config(
         page_title="SNCF Regularity", page_icon="🚆", layout="wide"
     )
@@ -49,7 +50,7 @@ def main() -> None:
         st.stop()
 
     # necessary functions to pass along our loaded data
-    # reasoning with a top to bottom approach instead of 
+    # reasoning with a top to bottom approach instead of
     # having to relaod the data everytime we need it
     # otherwise could try to have it as some kind of global variable ?
     def show_home_page() -> None:

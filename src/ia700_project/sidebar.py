@@ -1,22 +1,15 @@
-"""Detail the creation and handling of different
-kind of sidebars for
-streamlit app.
-"""
+"""Render sidebar controls for the Streamlit app."""
 
 from datetime import date, timedelta
 
 import pandas as pd
 import streamlit as st
 
-from ia700_project.constants import (
-    ARRIVAL,
-    DEPARTURE,
-)
 from ia700_project.models import ComparisonSelection, TravelSelection
 
 
 def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
-    """Render route and travel-date controls and return the selection
+    """Render route and travel-date controls and return the selection.
 
     Args:
         df: Nonempty dataset containing departure and arrival stations
@@ -89,7 +82,7 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
 
 def map_route_sidebar(routes: dict[str, str]) -> str | None:
-    """Return the selected route ID, else None to show all liaisons"""
+    """Return the selected route ID, else None to show all liaisons."""
     return st.sidebar.selectbox(
         "Liaison sur la carte",
         routes,
@@ -101,7 +94,7 @@ def map_route_sidebar(routes: dict[str, str]) -> str | None:
 
 
 def map_metric_sidebar(metrics: dict[str, str]) -> str:
-    """Return the metric key used to colour the overview map"""
+    """Return the metric key used to colour the overview map."""
     return st.sidebar.radio(
         "Indicateur de la carte",
         list(metrics),
@@ -111,7 +104,7 @@ def map_metric_sidebar(metrics: dict[str, str]) -> str:
 
 
 def comparison_sidebar() -> ComparisonSelection:
-    """Render comparison selected metrics and return the selected options"""
+    """Render comparison selected metrics and return the selected options."""
     st.sidebar.header("Votre comparaison")
 
     entity = st.sidebar.selectbox(

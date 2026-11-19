@@ -1,4 +1,4 @@
-"""Shared dataset column names"""
+"""Shared dataset column names."""
 
 PLANNED = "Nombre de circulations prévues"
 CANCELLED = "Nombre de trains annulés"

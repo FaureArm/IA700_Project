@@ -1,17 +1,11 @@
-"""File to load, validate and handle our dataset"""
+"""File to load, validate and handle our dataset."""
 
 from pathlib import Path
-from ia700_project.cleaning import clean_dataset
+
 import pandas as pd
 import streamlit as st
 
-from ia700_project.constants import (
-    ARRIVAL,
-    CANCELLED,
-    DELAY,
-    DEPARTURE,
-    PLANNED,
-)
+from ia700_project.cleaning import clean_dataset
 
 DATA_PATH = (
     Path(__file__).resolve().parents[2]  # adjust the path as needed
