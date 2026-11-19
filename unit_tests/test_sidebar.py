@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 from ia700_project import sidebar
-from ia700_project.constants import ARRIVAL, DEPARTURE
 
 
 def test_date_itinerary_sidebar_returns_selection(monkeypatch) -> None:
@@ -25,8 +24,8 @@ def test_date_itinerary_sidebar_returns_selection(monkeypatch) -> None:
 
     df = pd.DataFrame(
         {
-            DEPARTURE: ["PARIS LYON", "LILLE"],
-            ARRIVAL: ["LYON PART DIEU", "PARIS"],
+            "gare_depart": ["PARIS LYON", "LILLE"],
+            "gare_arrivee": ["LYON PART DIEU", "PARIS"],
         }
     )
 
@@ -68,8 +67,8 @@ def test_date_itinerary_sidebar_uses_first_stations_when_defaults_missing(
 
     df = pd.DataFrame(
         {
-            DEPARTURE: ["BORDEAUX", "LILLE"],
-            ARRIVAL: ["TOULOUSE", "PARIS"],
+            "gare_depart": ["BORDEAUX", "LILLE"],
+            "gare_arrivee": ["TOULOUSE", "PARIS"],
         }
     )
 
@@ -107,8 +106,8 @@ def test_date_itinerary_sidebar_stops_when_period_is_incomplete(
 
     df = pd.DataFrame(
         {
-            DEPARTURE: ["PARIS LYON"],
-            ARRIVAL: ["LYON PART DIEU"],
+            "gare_depart": ["PARIS LYON"],
+            "gare_arrivee": ["LYON PART DIEU"],
         }
     )
 

@@ -34,7 +34,6 @@ RATE_COLORS = ((26, 116, 67), (190, 119, 16), (186, 37, 52))
 MISSING_COLOR = (0, 0, 0)
 
 
-
 @st.cache_data(show_spinner=False)
 def load_map_data(
     directory: Path, modified_at: tuple[int, int]
@@ -94,6 +93,7 @@ def rate_color(
         round(a + fraction * (b - a))
         for a, b in zip(RATE_COLORS[step], RATE_COLORS[step + 1])
     )
+
 
 def route_tooltip(
     route: dict, pairs: set[tuple[str, str]], rates: dict
@@ -282,7 +282,8 @@ def render_tgv_map() -> None:
                     cursor: pointer !important;
                 }
             </style>
-        """)
+        """
+        )
         st.pydeck_chart(
             deck,
             key="tgv_map",
