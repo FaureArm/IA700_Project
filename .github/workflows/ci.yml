@@ -43,6 +43,7 @@ jobs:
             src/ia700_project/indicators.py \
             src/ia700_project/data.py \
             src/ia700_project/download_data.py \
+            src/ia700_project/models.py \
             unit_tests/test_analysis.py \
             unit_tests/test_cleaning.py \
             unit_tests/test_routes_metrics.py \
@@ -52,7 +53,8 @@ jobs:
             unit_tests/test_sidebar.py \
             unit_tests/test_indicators.py \
             unit_tests/test_data.py \
-            unit_tests/test_download_data.py
+            unit_tests/test_download_data.py \
+            unit_tests/test_models.py
 
 
       - name: Check code formatting
@@ -68,6 +70,7 @@ jobs:
             src/ia700_project/indicators.py \
             src/ia700_project/data.py \
             src/ia700_project/download_data.py \
+            src/ia700_project/models.py \
             unit_tests/test_analysis.py \
             unit_tests/test_cleaning.py \
             unit_tests/test_routes_metrics.py \
@@ -77,7 +80,8 @@ jobs:
             unit_tests/test_sidebar.py \
             unit_tests/test_indicators.py \
             unit_tests/test_data.py \
-            unit_tests/test_download_data.py
+            unit_tests/test_download_data.py \
+            unit_tests/test_models.py
 
       - name: Run unit tests with coverage
         run: uv run pytest

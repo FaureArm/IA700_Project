@@ -57,6 +57,7 @@ addopts = [
     "--cov=ia700_project.indicators",
     "--cov=ia700_project.data",
     "--cov=ia700_project.download_data",
+    "--cov=ia700_project.models",
     "--cov-report=term-missing",
     "--cov-fail-under=90"
 ]
