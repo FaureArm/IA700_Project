@@ -346,7 +346,7 @@ def test_cause_of_delays_ranking_returns_none_for_invalid_breakdowns():
 
 
 def test_ranking_returns_directional_route_ranking():
-    """Rank routes separately and order them by their indicator value."""
+    """Rank directional routes from highest to lowest indicator value."""
     result = ranking(
         make_data(),
         comparison_selection(metric="Taux d’annulation"),
@@ -359,8 +359,13 @@ def test_ranking_returns_directional_route_ranking():
         "value",
         "scheduled_train_count",
     ]
-    assert result.iloc[0]["entity"] == "PARIS LYON → LYON PART DIEU"
-    assert result.iloc[0]["value"] == pytest.approx(10 / 300 * 100)
+    assert list(result["entity"]) == [
+        "LYON PART DIEU → PARIS LYON",
+        "PARIS LYON → LYON PART DIEU",
+    ]
+    assert list(result["value"]) == pytest.approx(
+        [5 / 50 * 100, 10 / 300 * 100]
+    )
     assert result.iloc[0]["rank"] == 1
 
 

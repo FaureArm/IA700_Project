@@ -319,7 +319,7 @@ def cause_of_delays_ranking(
 def ranking(
     data: pd.DataFrame, selection: ComparisonSelection
 ) -> pd.DataFrame | None:
-    """Rank routes or stations from best (lowest) to worst indicator.
+    """Rank routes or stations from highest to lowest indicator value.
 
     ``min_volume`` applies to scheduled services for each entity over
     the full historical dataset. Rates are calculated from summed
