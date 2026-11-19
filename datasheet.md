@@ -1,4 +1,4 @@
-# Datasheet — Régularité mensuelle TGV (AQST)
+# Datasheet - Régularité mensuelle TGV (AQST)
 
 This datasheet documents the SNCF open dataset *Régularité mensuelle
 TGV par liaisons (AQST)* as used by the RailInsight project (IA700,

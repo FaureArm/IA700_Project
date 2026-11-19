@@ -12,10 +12,10 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
     """Render route and travel-date controls and return the selection.
 
     Args:
-        df: Nonempty dataset containing departure and arrival stations
+        df: Nonempty dataset containing departure and arrival stations.
 
     Returns:
-        Selected stations and travel dates
+        Selected stations and travel dates.
     """
     st.sidebar.header("Votre sélection")
 
@@ -52,9 +52,7 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
         key="arrival",
     )
 
-    ## Date selection ##
-    # calendar based to mimic traveling dates
-
+    # Select the travel period.
     today = date.today()
 
     travel_dates = st.sidebar.date_input(
@@ -71,14 +69,12 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
     travel_start, travel_end = travel_dates
 
-    selection = TravelSelection(
+    return TravelSelection(
         departure=departure,
         arrival=arrival,
         travel_start=travel_start,
         travel_end=travel_end,
     )
-
-    return selection
 
 
 def map_route_sidebar(routes: dict[str, str]) -> str | None:
@@ -139,7 +135,7 @@ def comparison_sidebar() -> ComparisonSelection:
 
     st.sidebar.caption(
         "Ce seuil permettra d’écarter les résultats "
-        "reposant sur un faible nombre de circulations"
+        "reposant sur un faible nombre de circulations."
     )
 
     return ComparisonSelection(

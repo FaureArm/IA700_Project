@@ -14,22 +14,25 @@ from ia700_project.sidebar import map_metric_sidebar, map_route_sidebar
 
 ## CONSANTS ##
 MAP_DATA = Path(__file__).resolve().parents[2] / "data" / "map"
+
 MAP_METRICS = {
     "disruption": "Perturbations",
     "delay": "Retards à l’arrivée",
     "cancellation": "Annulations",
 }
+
 HOVER_METRICS = ("delay", "cancellation")
-# Green, amber and red anchors stay the same when we filter the map
+
+# Green, amber and red anchors stay the same when we filter the map.
 RATE_SCALES = {
     "disruption": (0.15, 0.23, 0.35),
     "delay": (0.12, 0.20, 0.30),
     "cancellation": (0.03, 0.05, 0.08),
 }
+
 RATE_COLORS = ((26, 116, 67), (190, 119, 16), (186, 37, 52))
 MISSING_COLOR = (0, 0, 0)
 
-##
 
 
 @st.cache_data(show_spinner=False)
@@ -39,11 +42,11 @@ def load_map_data(
     """Load the saved routes and coverage from the same preprocessing build.
 
     Args:
-        directory: Folder with the compressed GeoJSON and its report
-        modified_at: Both file timestamps, used to refresh the cache on rebuild
+        directory: Folder containing the compressed GeoJSON and its report.
+        modified_at: File timestamps used to refresh the cache after a rebuild.
 
     Returns:
-        Routes with a list of drawable paths each, and the coverage counts
+        Routes with drawable paths and the coverage counts.
     """
     # load our map data
     # NB: we only generated this data once, no point in keeping the scrips
@@ -52,6 +55,7 @@ def load_map_data(
         (directory / "report.json").read_text(encoding="utf-8")
     )
     payload = gzip.decompress((directory / "liaisons.geojson.gz").read_bytes())
+
     routes = []
     for feature in json.loads(payload)["features"]:
         geometry = feature["geometry"]
@@ -63,6 +67,7 @@ def load_map_data(
             else [coordinates]
         )
         routes.append({**feature["properties"], "paths": paths})
+
     return routes, report["coverage"]
 
 
@@ -85,6 +90,10 @@ def rate_color(
         for a, b in zip(RATE_COLORS[step], RATE_COLORS[step + 1])
     )
 
+    return tuple(
+        round(a + fraction * (b - a))
+        for a, b in zip(RATE_COLORS[step], RATE_COLORS[step + 1])
+    )
 
 def route_tooltip(
     route: dict, pairs: set[tuple[str, str]], rates: dict
@@ -92,14 +101,17 @@ def route_tooltip(
     """Show perturbations in both directions when hovering a map route."""
     pair = route["departure"], route["arrival"]
     directions = [pair]
-    # check if the reverse direction exists and is not a loop then add it
+
+    # Add the reverse direction if it exists and is not a loop.
     if pair[::-1] in pairs and pair[::-1] != pair:
         directions.append(pair[::-1])
+
     lines = []
-    # collect our values for perturbations
+
     for departure, arrival in directions:
         lines.append(f"{departure} → {arrival}")
         values = rates.get((departure, arrival), {})
+
         if any(key in values for key in HOVER_METRICS):
             lines.append(
                 " · ".join(
@@ -111,6 +123,7 @@ def route_tooltip(
             )
         else:
             lines.append("Données indisponibles")
+
     return "\n".join(lines)
 
 
@@ -121,6 +134,7 @@ def render_rate_legend(
     if not has_rates:
         st.caption("Noir · données indisponibles pour cet indicateur.")
         return
+
     marks = "".join(
         '<span style="white-space:nowrap">'
         '<span aria-hidden="true" style="display:inline-block;'
@@ -129,6 +143,7 @@ def render_rate_legend(
         f"{prefix}{percentage_label(rate)}</span>"
         for rate, color, prefix in zip(scale, RATE_COLORS, ("≤ ", "", "≥ "))
     )
+
     st.html(
         '<div style="display:flex;align-items:center;flex-wrap:wrap;'
         'gap:.75rem;font-size:.875rem">'
@@ -148,17 +163,19 @@ def render_tgv_map() -> None:
     except FileNotFoundError:
         st.info("Données de la carte absentes.")
         return
-    # just in case for any other error, so we dont crash the app
     except (OSError, ValueError, KeyError, EOFError, ZlibError):
         st.warning("Données de la carte illisibles.")
         return
+
     if not routes:
         return
+
     st.caption(
         "Tracés reconstitués. "
         "Sources: SNCF, Train Nomade, OpenStreetMap, IGN Espagne et ERA."
     )
-    ## Sidebar and rates/values ##
+
+    # Sidebar and rates.
     metric = map_metric_sidebar(MAP_METRICS)
     selected = map_route_sidebar(
         {
@@ -167,7 +184,10 @@ def render_tgv_map() -> None:
         }
     )
     try:
-        rates = load_map_rates(str(DATA_PATH), DATA_PATH.stat().st_mtime_ns)
+        rates = load_map_rates(
+            str(DATA_PATH),
+            DATA_PATH.stat().st_mtime_ns,
+        )
     except (OSError, ValueError):
         rates = {}
     # we use the same stations label for the map as the CSV
@@ -178,17 +198,23 @@ def render_tgv_map() -> None:
     scale = RATE_SCALES[metric]
     pairs = {(route["departure"], route["arrival"]) for route in routes}
 
-    # if paths overlap then draw the higher rate on top
+    # If paths overlap, draw the higher rate on top.
     visible = []
     for route, route_rates in sorted(
         zip(routes, mapped_rates), key=lambda item: item[1].get(metric, -1)
     ):
         if selected and route["route_id"] != selected:
             continue
+
         color = rate_color(route_rates.get(metric), scale)
         tooltip = route_tooltip(route, pairs, rates)
+
         visible.extend(
-            {"path": path, "color": color, "tooltip": tooltip}
+            {
+                "path": path,
+                "color": color,
+                "tooltip": tooltip,
+            }
             for path in route["paths"]
         )
 
@@ -206,6 +232,7 @@ def render_tgv_map() -> None:
         opacity=0,
         pickable=True,
     )
+
     layer = pdk.Layer(
         "PathLayer",
         id="tgv-routes",
@@ -216,6 +243,7 @@ def render_tgv_map() -> None:
         width_units=pdk.types.String("pixels"),
         pickable=True,
     )
+
     deck = pdk.Deck(
         layers=[hit_area, layer],
         initial_view_state=pdk.ViewState(
@@ -237,7 +265,8 @@ def render_tgv_map() -> None:
     # align the tooltip overlay with the chart and
     # show a pointer while a route is picked
     with st.container(key="tgv_map_frame"):
-        st.html("""
+        st.html(
+            """
             <style>
                 .st-key-tgv_map_frame .deck-widgets-root {
                     position: absolute;

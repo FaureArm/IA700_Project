@@ -22,13 +22,17 @@ def aggregate_map_rates(
     ):
         if planned <= 0:
             continue
+
         rates = {
             "cancellation": cancelled / planned,
             "disruption": (delayed + cancelled) / planned,
         }
+
         if planned > cancelled:
             rates["delay"] = delayed / (planned - cancelled)
+
         result[departure, arrival] = rates
+
     return result
 
 
