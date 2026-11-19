@@ -55,6 +55,7 @@ addopts = [
     "--cov=ia700_project.map_view",
     "--cov=ia700_project.sidebar",
     "--cov=ia700_project.indicators",
+    "--cov=ia700_project.data",
     "--cov-report=term-missing",
     "--cov-fail-under=90"
 ]
