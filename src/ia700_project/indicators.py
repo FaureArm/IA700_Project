@@ -363,7 +363,7 @@ def ranking(
 
     result = (
         pd.DataFrame(records)
-        .sort_values(["value", "entity"], ascending=[True, True])
+        .sort_values(["value", "entity"], ascending=[False, True])
         .head(selection.top_n)
         .reset_index(drop=True)
     )
