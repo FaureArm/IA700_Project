@@ -1,11 +1,10 @@
-"""Create and handle the different sidebars for the Streamlit application."""
+"""Render sidebar controls for the Streamlit app."""
 
 from datetime import date, timedelta
 
 import pandas as pd
 import streamlit as st
 
-from ia700_project.constants import ARRIVAL, DEPARTURE
 from ia700_project.models import ComparisonSelection, TravelSelection
 
 
@@ -20,8 +19,12 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
     """
     st.sidebar.header("Votre sélection")
 
-    # Select departure and arrival stations.
-    departures = sorted(df[DEPARTURE].unique().tolist())
+    # select departure and arrival stations ##
+
+    # we have a default selection, but otherwise we just
+    # use first in our lists
+    departures = sorted(df["gare_depart"].unique().tolist())
+
     default_departure = "PARIS LYON"
 
     departure = st.sidebar.selectbox(
@@ -34,10 +37,8 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
         ),
         key="departure",
     )
-
-    filtered = df.loc[df[DEPARTURE].eq(departure)]
-
-    arrivals = sorted(filtered[ARRIVAL].unique().tolist())
+    filtered = df.loc[df["gare_depart"].eq(departure)]
+    arrivals = sorted(filtered["gare_arrivee"].unique().tolist())
     default_arrival = "LYON PART DIEU"
 
     arrival = st.sidebar.selectbox(
@@ -77,14 +78,7 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
 
 def map_route_sidebar(routes: dict[str, str]) -> str | None:
-    """Return the selected route ID, or None to show all routes.
-
-    Args:
-        routes: Dictionary associating route IDs with display labels.
-
-    Returns:
-        Selected route ID, or None if no route is selected.
-    """
+    """Return the selected route ID, else None to show all liaisons."""
     return st.sidebar.selectbox(
         "Liaison sur la carte",
         routes,
@@ -96,14 +90,7 @@ def map_route_sidebar(routes: dict[str, str]) -> str | None:
 
 
 def map_metric_sidebar(metrics: dict[str, str]) -> str:
-    """Return the metric key used to colour the overview map.
-
-    Args:
-        metrics: Dictionary associating metric keys with display labels.
-
-    Returns:
-        Selected metric key.
-    """
+    """Return the metric key used to colour the overview map."""
     return st.sidebar.radio(
         "Indicateur de la carte",
         list(metrics),
@@ -113,11 +100,7 @@ def map_metric_sidebar(metrics: dict[str, str]) -> str:
 
 
 def comparison_sidebar() -> ComparisonSelection:
-    """Render comparison controls and return the selected options.
-
-    Returns:
-        Selected comparison entity, metric, result count and minimum volume.
-    """
+    """Render comparison selected metrics and return the selected options."""
     st.sidebar.header("Votre comparaison")
 
     entity = st.sidebar.selectbox(
