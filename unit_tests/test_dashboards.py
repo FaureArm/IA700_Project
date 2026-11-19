@@ -87,7 +87,7 @@ def test_render_overview_dashboard(mock_streamlit, monkeypatch, sample_data):
 
     compute.assert_called_once_with(sample_data)
     metrics.assert_called_once_with(summary)
-    network_map.assert_called_once_with(sample_data)
+    network_map.assert_called_once_with()
 
 
 def test_render_network_map(mock_streamlit, monkeypatch, sample_data):
