@@ -196,7 +196,22 @@ def render_delay_causes(delay_causes: pd.DataFrame | None) -> None:
         st.info("Aucune répartition des causes disponible.")
         return
 
-    st.dataframe(delay_causes, hide_index=True)
+    # need to specifically name cols bc otherwise
+    # takes the df col names, not UI friendly
+    st.dataframe(
+        delay_causes,
+        hide_index=True,
+        column_config={
+            "cause": st.column_config.TextColumn(
+                "Cause du retard",
+                width="large",
+            ),
+            "percentage": st.column_config.NumberColumn(
+                "Part des retards (%)",
+                format="%.2f",
+            ),
+        },
+    )
 
 
 ### COMPARISON PAGE ###
@@ -250,8 +265,41 @@ def render_ranking(
     if ranking_data.empty:
         st.info("Aucun résultat ne correspond aux critères sélectionnés.")
         return
+    # need to specifically name cols bc otherwise
+    # takes the df col names, not UI friendly
+    # in this scenario, need to take into account selection units
+    entity_label = {
+        "Liaisons": "Liaison",
+        "Gares de départ": "Gare de départ",
+        "Gares d’arrivée": "Gare d’arrivée",
+    }[selection.entity]
 
-    st.dataframe(ranking_data, hide_index=True)
+    is_duration = selection.metric == "Retard moyen à l’arrivée"
+    unit = "min" if is_duration else "%"
+    value_format = "%.1f" if is_duration else "%.2f"
+
+    st.dataframe(
+        ranking_data,
+        hide_index=True,
+        column_config={
+            "rank": st.column_config.NumberColumn(
+                "Rang",
+                format="%d",
+            ),
+            "entity": st.column_config.TextColumn(
+                entity_label,
+                width="large",
+            ),
+            "value": st.column_config.NumberColumn(
+                f"{selection.metric} ({unit})",
+                format=value_format,
+            ),
+            "scheduled_train_count": st.column_config.NumberColumn(
+                "Circulations prévues",
+                format="%d",
+            ),
+        },
+    )
 
 
 def render_comparison_time_evolution(
