@@ -1,32 +1,21 @@
-"""
-Detail the creation and handling of different
-kind of sidebars for
-streamlit app.
-"""
+"""Render sidebar controls for the Streamlit app."""
 
 from datetime import date, timedelta
 
 import pandas as pd
 import streamlit as st
 
-from ia700_project.constants import (
-    ARRIVAL,
-    CANCELLED,
-    DELAY,
-    DEPARTURE,
-    PLANNED,
-)
 from ia700_project.models import ComparisonSelection, TravelSelection
 
 
 def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
-    """Render route and travel-date controls and return the selection
+    """Render route and travel-date controls and return the selection.
 
     Args:
-        df: Nonempty dataset containing departure and arrival stations
+        df: Nonempty dataset containing departure and arrival stations.
 
     Returns:
-        Selected stations and travel dates
+        Selected stations and travel dates.
     """
     st.sidebar.header("Votre sélection")
 
@@ -34,7 +23,8 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
     # we have a default selection, but otherwise we just
     # use first in our lists
-    departures = sorted(df[DEPARTURE].unique().tolist())
+    departures = sorted(df["gare_depart"].unique().tolist())
+
     default_departure = "PARIS LYON"
 
     departure = st.sidebar.selectbox(
@@ -47,10 +37,8 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
         ),
         key="departure",
     )
-
-    filtered = df.loc[df[DEPARTURE].eq(departure)]
-
-    arrivals = sorted(filtered[ARRIVAL].unique().tolist())
+    filtered = df.loc[df["gare_depart"].eq(departure)]
+    arrivals = sorted(filtered["gare_arrivee"].unique().tolist())
     default_arrival = "LYON PART DIEU"
 
     arrival = st.sidebar.selectbox(
@@ -64,9 +52,7 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
         key="arrival",
     )
 
-    ## Date selection ##
-    # calendar based to mimic traveling dates
-
+    # Select the travel period.
     today = date.today()
 
     travel_dates = st.sidebar.date_input(
@@ -83,20 +69,40 @@ def date_itinerary_sidebar(df: pd.DataFrame) -> TravelSelection:
 
     travel_start, travel_end = travel_dates
 
-    selection = TravelSelection(
+    return TravelSelection(
         departure=departure,
         arrival=arrival,
         travel_start=travel_start,
         travel_end=travel_end,
     )
 
-    return selection
+
+def map_route_sidebar(routes: dict[str, str]) -> str | None:
+    """Return the selected route ID, else None to show all liaisons."""
+    return st.sidebar.selectbox(
+        "Liaison sur la carte",
+        routes,
+        index=None,
+        format_func=routes.__getitem__,
+        placeholder="Toutes les liaisons",
+        key="map_route",
+    )
+
+
+def map_metric_sidebar(metrics: dict[str, str]) -> str:
+    """Return the metric key used to colour the overview map."""
+    return st.sidebar.radio(
+        "Indicateur de la carte",
+        list(metrics),
+        format_func=metrics.__getitem__,
+        key="map_metric",
+    )
 
 
 def comparison_sidebar() -> ComparisonSelection:
-    """Render comparison selected metrics and return the selected options"""
+    """Render comparison selected metrics and return the selected options."""
     st.sidebar.header("Votre comparaison")
-    
+
     entity = st.sidebar.selectbox(
         "Que souhaitez-vous comparer ?",
         ["Liaisons", "Gares de départ", "Gares d’arrivée"],
@@ -129,7 +135,7 @@ def comparison_sidebar() -> ComparisonSelection:
 
     st.sidebar.caption(
         "Ce seuil permettra d’écarter les résultats "
-        "reposant sur un faible nombre de circulations"
+        "reposant sur un faible nombre de circulations."
     )
 
     return ComparisonSelection(
@@ -138,10 +144,3 @@ def comparison_sidebar() -> ComparisonSelection:
         top_n=top_n,
         min_volume=min_volume,
     )
-
-
-
-
-
-
-
