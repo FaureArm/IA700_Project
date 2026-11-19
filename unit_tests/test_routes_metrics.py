@@ -82,78 +82,103 @@ def test_creer_csv_metriques_assigns_seasons(df_trains):
     }
 
 
-def test_creer_csv_metriques_aggregates_values(df_trains):
-    """Train counts are correctly aggregated by route and season."""
+def test_creer_csv_metriques_assigns_months(df_trains):
+    """Each date is correctly associated with its French month."""
     result = routes_metrics.creer_csv_metriques(df_trains)
 
-    winter = result[
+    assert set(result["Mois"]) == {
+        "Janvier",
+        "Février",
+        "Avril",
+        "Juillet",
+        "Octobre",
+    }
+
+
+def test_creer_csv_metriques_aggregates_values(df_trains):
+    """Train counts are correctly aggregated by route, season and month."""
+    result = routes_metrics.creer_csv_metriques(df_trains)
+
+    january = result[
         (result["Liaison"] == "PARIS LYON -> MARSEILLE")
-        & (result["Saison"] == "Hiver")
+        & (result["Mois"] == "Janvier")
     ].iloc[0]
 
-    assert winter["Nombre de circulations prévues"] == 200
-    assert winter["Nombre de trains annulés"] == 10
-    assert winter["Nombre de trains en retard à l'arrivée"] == 30
+    assert january["Nombre de circulations prévues"] == 100
+    assert january["Nombre de trains annulés"] == 10
+    assert january["Nombre de trains en retard à l'arrivée"] == 20
 
 
 def test_creer_csv_metriques_calculates_operated_trains(df_trains):
     """The number of operated trains is correctly calculated."""
     result = routes_metrics.creer_csv_metriques(df_trains)
 
-    winter = result[
+    january = result[
         (result["Liaison"] == "PARIS LYON -> MARSEILLE")
-        & (result["Saison"] == "Hiver")
+        & (result["Mois"] == "Janvier")
     ].iloc[0]
 
-    assert winter["Trains circulés"] == 190
+    assert january["Trains circulés"] == 90
 
 
 def test_creer_csv_metriques_calculates_delay_rate(df_trains):
     """The arrival delay rate is correctly calculated."""
     result = routes_metrics.creer_csv_metriques(df_trains)
 
-    winter = result[
+    january = result[
         (result["Liaison"] == "PARIS LYON -> MARSEILLE")
-        & (result["Saison"] == "Hiver")
+        & (result["Mois"] == "Janvier")
     ].iloc[0]
 
-    assert winter["Taux retard arrivée"] == pytest.approx(30 / 190)
+    assert january["Taux retard arrivée"] == pytest.approx(20 / 90)
 
 
 def test_creer_csv_metriques_calculates_cancellation_rate(df_trains):
     """The cancellation rate is correctly calculated."""
     result = routes_metrics.creer_csv_metriques(df_trains)
 
-    winter = result[
+    january = result[
         (result["Liaison"] == "PARIS LYON -> MARSEILLE")
-        & (result["Saison"] == "Hiver")
+        & (result["Mois"] == "Janvier")
     ].iloc[0]
 
-    assert winter["Taux annulation"] == pytest.approx(10 / 200)
+    assert january["Taux annulation"] == pytest.approx(10 / 100)
 
 
 def test_creer_csv_metriques_calculates_reliability_rate(df_trains):
     """The reliability rate is correctly calculated."""
     result = routes_metrics.creer_csv_metriques(df_trains)
 
-    winter = result[
+    january = result[
         (result["Liaison"] == "PARIS LYON -> MARSEILLE")
-        & (result["Saison"] == "Hiver")
+        & (result["Mois"] == "Janvier")
     ].iloc[0]
 
-    assert winter["Taux fiabilité"] == pytest.approx(160 / 200)
+    assert january["Taux fiabilité"] == pytest.approx(70 / 100)
 
 
-def test_creer_csv_metriques_groups_all_years(tmp_path):
-    """Data from different years are grouped by route and season."""
+def test_creer_csv_metriques_groups_same_month_across_years(tmp_path):
+    """Data from different years are grouped by route and month."""
     df = pd.DataFrame(
         {
-            "date": ["2023-01-15", "2024-02-15"],
-            "gare_depart": ["PARIS LYON", "PARIS LYON"],
-            "gare_arrivee": ["MARSEILLE", "MARSEILLE"],
-            "nb_train_prevu": [100, 100],
-            "nb_annulation": [5, 5],
-            "nb_train_retard_arrivee": [10, 20],
+            "date": [
+                "2023-01-15",
+                "2024-01-15",
+                "2024-02-15",
+            ],
+            "gare_depart": [
+                "PARIS LYON",
+                "PARIS LYON",
+                "PARIS LYON",
+            ],
+            "gare_arrivee": [
+                "MARSEILLE",
+                "MARSEILLE",
+                "MARSEILLE",
+            ],
+            "nb_train_prevu": [100, 100, 100],
+            "nb_annulation": [5, 5, 5],
+            "nb_train_retard_arrivee": [10, 20, 20],
         }
     )
 
@@ -162,15 +187,29 @@ def test_creer_csv_metriques_groups_all_years(tmp_path):
 
     result = routes_metrics.creer_csv_metriques(csv_file)
 
-    winter = result[
-        (result["Liaison"] == "PARIS LYON -> MARSEILLE")
-        & (result["Saison"] == "Hiver")
+    route = "PARIS LYON -> MARSEILLE"
+
+    january = result[
+        (result["Liaison"] == route) & (result["Mois"] == "Janvier")
     ]
 
-    assert len(winter) == 1
-    assert winter.iloc[0]["Nombre de circulations prévues"] == 200
-    assert winter.iloc[0]["Nombre de trains annulés"] == 10
-    assert winter.iloc[0]["Nombre de trains en retard à l'arrivée"] == 30
+    february = result[
+        (result["Liaison"] == route) & (result["Mois"] == "Février")
+    ]
+
+    # January 2023 and January 2024 are grouped together.
+    assert len(january) == 1
+    assert january.iloc[0]["Nombre de circulations prévues"] == 200
+    assert january.iloc[0]["Nombre de trains annulés"] == 10
+    assert january.iloc[0]["Nombre de trains en retard à l'arrivée"] == 30
+
+    # February remains a separate monthly result.
+    assert len(february) == 1
+    assert february.iloc[0]["Nombre de circulations prévues"] == 100
+    assert february.iloc[0]["Nombre de trains annulés"] == 5
+    assert february.iloc[0]["Nombre de trains en retard à l'arrivée"] == 20
+
+    assert len(result) == 2
 
 
 def test_creer_csv_metriques_handles_zero_operated_trains(tmp_path):
@@ -223,7 +262,10 @@ def test_creer_csv_metriques_saves_output_file(df_trains, tmp_path):
     """The metrics are correctly saved when an output path is provided."""
     output_file = tmp_path / "metrics.csv"
 
-    result = routes_metrics.creer_csv_metriques(df_trains, sortie=output_file)
+    result = routes_metrics.creer_csv_metriques(
+        df_trains,
+        sortie=output_file,
+    )
 
     assert output_file.is_file()
 
