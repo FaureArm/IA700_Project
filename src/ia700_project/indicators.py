@@ -4,8 +4,7 @@ to then be added here
 """
 
 import pandas as pd
-from ia700_project.models import TravelSelection
-from ia700_project.constants import CANCELLED, DELAY, PLANNED
+from ia700_project.models import ComparisonSelection, TravelSelection
 
 ### Main Page ###
 
@@ -30,116 +29,64 @@ def compute_overview_summary(data: pd.DataFrame) -> pd.DataFrame:
 ### Exploration Page ###
 
 def scheduled_trains_count(data: pd.DataFrame, selection: TravelSelection) -> int | None:
+    """Expected return: an intenger expressing number of scheduled trains for the selected 
+    route and date.
+    """
     return None
 
 
 def cancellation_rate(data: pd.DataFrame, selection: TravelSelection) -> float | None:
+    """Expected return: percentage (0-100) of trains cancelled for a given selection."""
     return None
 
 
 def delay_rate(data: pd.DataFrame, selection: TravelSelection) -> float | None:
+    """Expected return: percentage (0-100) of late trains for a given selection.
+    NB: late means bigger than 15 min ?"""
     return None
 
 
 def avg_delay_length(data: pd.DataFrame, selection: TravelSelection) -> float | None:
+    """Expected return: integer expressin avg delay in minutes for a given selection.
+    NB: Count delays below 15 min?"""
     return None
 
 
 def time_chart(data: pd.DataFrame, selection: TravelSelection) -> pd.DataFrame | None:
-    """_returns:
+    """Expected returns: A dataframe with cols:
             month
             cancellation_rate_pct
             arrival_delay_rate_pct
             mean_arrival_delay_minutes
+        For the selection expressed in the argument
     """
     return None
 
 
 def cause_of_delays_ranking(data: pd.DataFrame, selection: TravelSelection) -> pd.DataFrame | None:
+    """Expected return: dataframe sorted by causes of delays for a given selection, ranked from highest to lowest.
+    The goal is to see which causes are the most frequent for a given selection."""
+    return None
+
+### Comparison Page ###
+
+def ranking(data: pd.DataFrame, selection: ComparisonSelection) -> pd.DataFrame | None:
+    """Expected return: for the selected variables, return a global ranking as a dataframe:
+        rank
+        entity: liaison or station label ("PARIS LYON → LYON PART DIEU" or "PARIS LYON")
+        value: calculated value of the indicator selected in the sidebar
+        scheduled_train_count"""
     return None
 
 
-
-def compute_route_seasonal_summary(
-    data: pd.DataFrame, selection: TravelSelection
+def comparison_time_chart(
+    data: pd.DataFrame,
+    selection: ComparisonSelection,
+    ranking_data: pd.DataFrame,
 ) -> pd.DataFrame | None:
-    """For a selected roue and date, return a dataframe summary.
-
-    Args:
-        data: SNCF data as dataframe, after being cleaned up
-        selection: selected route and date, see dataclass for more info
-
-    Returns:
-        A dataframe containing one row per season
-        covered by the travel dates, pooling all available years.
-
-        Expected columns: season, delayed trains count, scheduled trains,
-        cancelled trains count, etc
-
-         SHould return an empty DataFrame when no usable observations match
-        the selection.
+    """Expected return: a df covering the entities provided in ranking_data
+        month
+        entity: liaison or station label ("PARIS LYON → LYON PART DIEU" or "PARIS LYON")
+        value: calculated value of the indicator selected in the sidebar
     """
     return None
-
-
-def monthly_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrège les annulations et pondère le retard par les trains ayant circulé."""
-    prepared = df.assign(
-        circulated=df[PLANNED] - df[CANCELLED],
-        delay_minutes=df[DELAY] * (df[PLANNED] - df[CANCELLED]),
-    )
-    monthly = (
-        prepared.groupby("Date")[
-            [PLANNED, CANCELLED, "circulated", "delay_minutes"]
-        ]
-        .sum()
-        .sort_index()
-    )
-    monthly["Retard moyen à l'arrivée (min)"] = monthly[
-        "delay_minutes"
-    ] / monthly["circulated"].replace(0, float("nan"))
-    monthly["Taux d'annulation (%)"] = (
-        monthly[CANCELLED] / monthly[PLANNED] * 100
-    )
-    return monthly
-
-def compute_route_monthly_history(
-    data: pd.DataFrame, selection: TravelSelection
-) -> pd.DataFrame | None:
-    """Prepare the monthly history for a selected route.
-
-    Args:
-        data: SNCF data as a DataFrame, after being cleaned up
-        selection: Selected route and travel dates, see dataclass for more info
-
-    Returns:
-        A DataFrame containing one row per calendar month, sorted
-        chronologically and retaining the year
-
-        Expected columns: month, scheduled_train_count,
-        cancelled_train_count, operated_train_count,
-        cancellation_rate_pct, arrival_delay_rate_pct,
-        mean_arrival_delay_minutes
-
-        ->mean delays are expressed in minutes
-
-        Should return an empty DataFrame when no usable observations
-        match the selected route
-
-    """
-    return None
-
-def compute_route_delay_causes(
-    data: pd.DataFrame, selection: TravelSelection
-) -> pd.DataFrame | None:
-    """Prepare delay causes for the selected route and travel seasons.
-
-    Args:
-    data: SNCF data as a DataFrame, after being cleaned up
-    selection: Selected route and travel dates, see dataclass for more info
-
-    Returns:
-        truc
-    """
-    return None
-

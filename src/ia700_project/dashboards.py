@@ -14,10 +14,11 @@ from ia700_project.indicators import (
     avg_delay_length,
     time_chart,
     cause_of_delays_ranking,
+    ranking,
+    comparison_time_chart,
 )
 
 ### MAIN PAGE ###
-
 
 def render_overview_dashboard(data: pd.DataFrame) -> None:
     """Acts as a global entry point for different
@@ -37,7 +38,7 @@ def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
     """Display the dataset overview returned by the calculation."""
     route_count_label = "—"
     station_count_label = "—"
-    latest_month_label = "—"
+   # latest_month_label = "—"
 
     if overview_summary is None:
         st.caption("Aucune donnée exploitable pour les indicateurs du réseau.")
@@ -53,10 +54,10 @@ def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
             f"{int(summary['station_count']):,}".replace(",", " ")
         )
 
-        if pd.notna(summary["latest_month"]):
-            latest_month_label = pd.Timestamp(
-                summary["latest_month"]
-            ).strftime("%m/%Y")
+        # if pd.notna(summary["latest_month"]):
+        #     latest_month_label = pd.Timestamp(
+        #         summary["latest_month"]
+        #     ).strftime("%m/%Y")
 
     routes_column, stations_column, latest_month_column = st.columns(3)
 
@@ -162,30 +163,74 @@ def render_delay_causes(delay_causes: pd.DataFrame | None) -> None:
 
 ### COMPARISON PAGE ###
 
-def render_comparison_dashboard(data: pd.DataFrame, selection: ComparisonSelection) -> None:
-    render_ranking(selection)
-    render_comparison_time_evolution(selection)
+def render_comparison_dashboard(
+    data: pd.DataFrame, selection: ComparisonSelection
+) -> None:
+    ranking_data = ranking(data, selection)
+    render_ranking(ranking_data, selection)
+
+    if ranking_data is None or ranking_data.empty:
+        monthly_history = ranking_data
+    else:
+        monthly_history = comparison_time_chart(data, selection, ranking_data)
+
+    render_comparison_time_evolution(monthly_history, selection)
 
     with st.expander("Comment lire cette comparaison ?"):
-        st.write("blablabla petite description pour faire jolie")
+        st.write("TODO")
 
-def render_ranking(selection: ComparisonSelection) -> None:
+def render_ranking(
+    ranking_data: pd.DataFrame | None,
+    selection: ComparisonSelection,
+) -> None:
     st.subheader(f"Classement · {selection.entity}")
     st.caption(
         f"{selection.metric} · {selection.top_n} résultats maximum · "
         f"minimum {selection.min_volume} circulations prévues"
     )
-    st.info(
-        "Afficher ici le classement et les volumes associés à la recherche du sidebar"
+
+    # here we differentiate between missing data
+    # and a empty search function, unlike other dashboards
+    if ranking_data is None:
+        st.info("Aucunes données disponibles.")
+        return
+
+    if ranking_data.empty:
+        st.info("Aucun résultat ne correspond aux critères sélectionnés.")
+        return
+
+    st.dataframe(ranking_data, hide_index=True)
+
+def render_comparison_time_evolution(
+    monthly_history: pd.DataFrame | None,
+    selection: ComparisonSelection,
+) -> None:
+    st.subheader("Comparer les évolutions")
+
+    # here we differentiate between missing data
+    # and a empty search function, unlike other dashboards
+    if monthly_history is None:
+        st.info("Aucunes données disponibles.")
+        return
+
+    if monthly_history.empty:
+        st.info("Aucun historique disponible pour cette comparaison.")
+        return
+
+    # plot our chart
+    chart_data = monthly_history.pivot(
+        index="month",
+        columns="entity",
+        values="value",
+    ).sort_index()
+
+    unit = (
+        "Minutes"
+        if selection.metric == "Retard moyen à l’arrivée"
+        else "Taux (%)"
     )
 
-def render_comparison_time_evolution(selection: ComparisonSelection) -> None:
-    st.subheader("Comparer les évolutions")
-    st.info(
-        " Ici, montrer une évolution temporelle de nos variables séléctionnées "
-        " montrer évolution pour tous les candidats du top ? eg si on choisit le nbre de résultats"
-        "valant 10, seuelement 10 sur graphes? ou tous? prendre en compte nombre minimal de vilume?"
-    )
+    st.line_chart(chart_data, x_label="Mois", y_label=unit)
 
 
 
