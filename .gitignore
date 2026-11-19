@@ -10,3 +10,8 @@ data/*.parquet
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+
+# Test coverage
+.coverage
+.coverage.*
+htmlcov/

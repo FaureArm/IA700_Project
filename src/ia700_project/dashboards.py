@@ -1,61 +1,112 @@
-"""
-Create dashboards to be displayed by our steamlit app.
-"""
+"""Create dashboards to be displayed by our steamlit app."""
 
 import pandas as pd
 import streamlit as st
 
+from ia700_project.indicators import (
+    avg_delay_length,
+    cancellation_rate,
+    cause_of_delays_ranking,
+    comparison_time_chart,
+    compute_overview_summary,
+    delay_rate,
+    ranking,
+    scheduled_trains_count,
+    time_chart,
+)
+from ia700_project.map_view import render_tgv_map
 from ia700_project.models import ComparisonSelection, TravelSelection
 
+### MAIN PAGE ###
 
-def render_exploration_dashboard(selection: TravelSelection) -> None:
-    """Display the travel summary and historical analysis placeholders"""
+
+def render_overview_dashboard(data: pd.DataFrame) -> None:
+    """Render the network metrics and interactive map."""
+    # st.caption(f"Vérification · {len(data):,} observations reçues.")
+    overview_summary = compute_overview_summary(data)
+    render_overview_metrics(overview_summary)
+    # to render some generic values on top, could be switched to a sidebar,
+    # or smth else perhaps idk?
+    render_network_map()  # to render the map with overlay
+
+
+def render_network_map() -> None:
+    """Add the network heading and interactive map to the overview."""
+    st.subheader("Le réseau en un regard")
+    render_tgv_map()
+
+
+def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
+    """Display the dataset overview returned by the calculation."""
+    route_count_label = "—"
+    station_count_label = "—"
+    # latest_month_label = "—"
+
+    if overview_summary is None:
+        st.caption("Aucune donnée exploitable pour les indicateurs du réseau.")
+    elif overview_summary.empty:
+        st.caption("Aucune donnée exploitable pour les indicateurs du réseau.")
+    else:
+        summary = overview_summary.iloc[0]
+
+        route_count_label = f"{int(summary['route_count']):,}".replace(
+            ",", " "
+        )
+        station_count_label = f"{int(summary['station_count']):,}".replace(
+            ",", " "
+        )
+
+        # if pd.notna(summary["latest_month"]):
+        #     latest_month_label = pd.Timestamp(
+        #         summary["latest_month"]
+        #     ).strftime("%m/%Y")
+
+    routes_column, stations_column, latest_month_column = st.columns(3)
+
+    routes_column.metric("Liaisons couvertes", route_count_label)
+    stations_column.metric("Gares représentées", station_count_label)
+
+
+### EXPLORATION PAGE ###
+
+
+def render_exploration_dashboard(
+    data: pd.DataFrame, selection: TravelSelection
+) -> None:
+    """Render the summary and history for the selected journey.
+
+    Args:
+        data (pd.DataFrame): _description_
+        selection (TravelSelection): _description_
+    """
     render_travel_summary(selection)
-
-    st.info(
-        "=> ici on affiche les résultats historiques de la selection. Pas une prédiction, juste" \
-        "dire que ba à cette période la des années précédentes, on a eu tel retard moyen et tel taux d'annulation" \
-        "On peut probablement juste faire par mois au final"
-    )
-
-    render_summary_metrics()
+    render_summary_metrics(data, selection)
 
     left, right = st.columns(2)
 
     with left:
-        render_exploration_time_evolution()
+        monthly_history = time_chart(data, selection)
+        render_exploration_time_evolution(monthly_history)
 
     with right:
-        render_delay_causes()
+        delay_causes = cause_of_delays_ranking(data, selection)
+        render_delay_causes(delay_causes)
 
     with st.expander("Comprendre les résultats"):
         st.write(
-            "blablabla petite description pour faire jolie"
+            "Le bilan et les causes portent sur les saisons complètes "
+            "correspondant aux dates du voyage. "
+            "La courbe mensuelle présente l’historique complet "
+            "de la liaison."
         )
 
 
-def render_ranking(selection: ComparisonSelection) -> None:
-    st.subheader(f"Classement · {selection.entity}")
-    st.caption(
-        f"{selection.metric} · {selection.top_n} résultats maximum · "
-        f"minimum {selection.min_volume} circulations prévues"
-    )
-    st.info(
-        "Afficher ici le classement et les volumes associés à la recherche du sidebar"
-    )
-
-
-def render_comparison_time_evolution(selection: ComparisonSelection) -> None:
-    st.subheader("Comparer les évolutions")
-    st.info(
-        " Ici, montrer une évolution temporelle de nos variables séléctionnées " \
-        " montrer évolution pour tous les candidats du top ? eg si on choisit le nbre de résultats" \
-        "valant 10, seuelement 10 sur graphes? ou tous? prendre en compte nombre minimal de vilume?"
-        
-    )
-
-
 def render_travel_summary(selection: TravelSelection) -> None:
+    """Display the selected route and travel dates.
+
+    Args:
+        selection (TravelSelection): _description_
+    """
     st.subheader(f"{selection.departure} → {selection.arrival}")
     st.write(
         f"Voyage du {selection.travel_start:%d/%m/%Y} "
@@ -63,86 +114,179 @@ def render_travel_summary(selection: TravelSelection) -> None:
     )
 
 
-def render_summary_metrics() -> None:
-    st.subheader("Que montre l’historique ?")
-
-    volume, cancellations, delays, duration = st.columns(4)
-    volume.metric("Circulations étudiées", "—")
-    cancellations.metric("Taux d’annulation", "—")
-    delays.metric("Taux de retard à l’arrivée", "—")
-    duration.metric("Retard moyen à l’arrivée", "—")
-
-    st.caption(
-        "TODO: indicateurs à calculer "
-        "-> décrire les observations historiques de cette liaison"
-    )
-
-
-def render_exploration_time_evolution() -> None:
-    st.subheader("Évolution dans le temps")
-    st.info("afficher graphs d'évolutions de retard et annulation")
-
-
-def render_delay_causes() -> None:
-    st.subheader("Causes des retards")
-    st.info("Afficher répartition des causes, grosses catégories ou qqchose vu qu'on a pas bcp d'infos")
-
-
-def render_comparison_dashboard(selection: ComparisonSelection) -> None:
-    render_ranking(selection)
-    render_comparison_time_evolution(selection)
-
-    with st.expander("Comment lire cette comparaison ?"):
-        st.write(
-            "blablabla petite description pour faire jolie"
-        )
-
-def render_overview_metrics(df: pd.DataFrame | None = None) -> None:
-    """Small dashboard showing basic metrics
-    through three columns. 
-    NB: we spam try excepts, not very elegant but foolproof i suppose
+def render_summary_metrics(
+    data: pd.DataFrame, selection: TravelSelection
+) -> None:
+    """Display train volume, cancellation, and arrival delay metrics.
 
     Args:
-        liaison_count (int): _description_
-        station_count (int): _description_
-        latest_month (str): _description_
+        data (pd.DataFrame): _description_
+        selection (TravelSelection): _description_
     """
-    liaisons_col, stations_col, latest_month_col = st.columns(3)
-    if df is None or df.empty:
-            liaison_count, station_count, latest_month = "-", "-", "-"
+    st.subheader("Que montre l’historique ?")
+
+    train_count = scheduled_trains_count(data, selection)
+    cancellation_pct = cancellation_rate(data, selection)
+    delay_pct = delay_rate(data, selection)
+    average_delay_minutes = avg_delay_length(data, selection)
+
+    volume, cancellations, delays, duration = st.columns(4)
+    volume.metric(
+        "Circulations prévues",
+        f"{train_count:,}".replace(",", " ")
+        if pd.notna(train_count)
+        else "Indisponible",
+    )
+    cancellations.metric(
+        "Taux d’annulation",
+        f"{cancellation_pct:.2f} %"
+        if pd.notna(cancellation_pct)
+        else "Indisponible",
+    )
+    delays.metric(
+        "Taux de retard à l’arrivée",
+        f"{delay_pct:.2f} %" if pd.notna(delay_pct) else "Indisponible",
+    )
+    duration.metric(
+        "Retard moyen à l’arrivée",
+        f"{average_delay_minutes:.1f} min"
+        if pd.notna(average_delay_minutes)
+        else "Indisponible",
+    )
+
+
+def render_exploration_time_evolution(
+    monthly_history: pd.DataFrame | None,
+) -> None:
+    """Display the monthly history returned by the calculation."""
+    st.subheader("Évolution dans le temps")
+
+    if monthly_history is None or monthly_history.empty:
+        st.info("Aucun historique mensuel disponible pour cette liaison.")
+        return
+    chart_data = monthly_history.sort_values("month").set_index("month")
+
+    st.line_chart(
+        chart_data[["cancellation_rate_pct", "arrival_delay_rate_pct"]].rename(
+            columns={
+                "cancellation_rate_pct": "Annulations",
+                "arrival_delay_rate_pct": "Retards à l’arrivée",
+            }
+        ),
+        x_label="Mois",
+        y_label="Taux (%)",
+    )
+
+    st.line_chart(
+        chart_data[["mean_arrival_delay_minutes"]].rename(
+            columns={
+                "mean_arrival_delay_minutes": "Retard moyen à l’arrivée",
+            }
+        ),
+        x_label="Mois",
+        y_label="Minutes",
+    )
+
+
+def render_delay_causes(delay_causes: pd.DataFrame | None) -> None:
+    """Display the delay causes returned by the calculation."""
+    st.subheader("Causes des retards")
+
+    if delay_causes is None or delay_causes.empty:
+        st.info("Aucune répartition des causes disponible.")
+        return
+
+    st.dataframe(delay_causes, hide_index=True)
+
+
+### COMPARISON PAGE ###
+
+
+def render_comparison_dashboard(
+    data: pd.DataFrame, selection: ComparisonSelection
+) -> None:
+    """Render the ranking and monthly trends for the comparison.
+
+    Args:
+        data (pd.DataFrame): _description_
+        selection (ComparisonSelection): _description_
+    """
+    ranking_data = ranking(data, selection)
+    render_ranking(ranking_data, selection)
+
+    if ranking_data is None or ranking_data.empty:
+        monthly_history = ranking_data
     else:
-        liaison_count, station_count, latest_month = 0,0,0#TODO: compute these metrics from df, maybe in a separate function to be reused in the sidebar?
+        monthly_history = comparison_time_chart(data, selection, ranking_data)
 
-    liaisons_col, stations_col, latest_month_col = st.columns(3)
-    try:
-        liaisons_col.metric("Liaisons couvertes", liaison_count)
-    except TypeError:
-        liaisons_col.metric("Liaisons couvertes", "—")
-    try:
-        stations_col.metric("Gares représentées", station_count)
-    except TypeError:
-        stations_col.metric("Gares représentées", "—")
-    try:
-        latest_month_col.metric("Dernier mois disponible", latest_month)
-    except TypeError:
-        latest_month_col.metric("Dernier mois disponible", "—")
+    render_comparison_time_evolution(monthly_history, selection)
+
+    with st.expander("Comment lire cette comparaison ?"):
+        st.write("TODO")
 
 
-def render_network_map() -> None:
-    st.subheader("Le réseau en un regard")
+def render_ranking(
+    ranking_data: pd.DataFrame | None,
+    selection: ComparisonSelection,
+) -> None:
+    """Display the ranking for the selected metric.
 
-    st.map(
-        pd.DataFrame({"lat": [46.6], "lon": [2.2]}),
-        zoom=4,
-    )
+    Args:
+        ranking_data (pd.DataFrame | None): _description_
+        selection (ComparisonSelection): _description_
+    """
+    st.subheader(f"Classement · {selection.entity}")
     st.caption(
-        "Petite caption à completer plus tard"
+        f"{selection.metric} · {selection.top_n} résultats maximum · "
+        f"minimum {selection.min_volume} circulations prévues"
     )
 
+    # here we differentiate between missing data
+    # and a empty search function, unlike other dashboards
+    if ranking_data is None:
+        st.info("Aucunes données disponibles.")
+        return
 
-def render_overview_dashboard() -> None:
-    """ Acts as a global entry point for different 
-    components to be shown on the main page"""
-    df = None
-    render_overview_metrics(df) # to render some generic values on top, could be switched to a sidebar, or smth else perhaps idk?
-    render_network_map() # to render the map with overlay
+    if ranking_data.empty:
+        st.info("Aucun résultat ne correspond aux critères sélectionnés.")
+        return
+
+    st.dataframe(ranking_data, hide_index=True)
+
+
+def render_comparison_time_evolution(
+    monthly_history: pd.DataFrame | None,
+    selection: ComparisonSelection,
+) -> None:
+    """Plot the monthly values for the compared routes or stations.
+
+    Args:
+        monthly_history (pd.DataFrame | None): _description_
+        selection (ComparisonSelection): _description_
+    """
+    st.subheader("Comparer les évolutions")
+
+    # here we differentiate between missing data
+    # and a empty search function, unlike other dashboards
+    if monthly_history is None:
+        st.info("Aucunes données disponibles.")
+        return
+
+    if monthly_history.empty:
+        st.info("Aucun historique disponible pour cette comparaison.")
+        return
+
+    # plot our chart
+    chart_data = monthly_history.pivot(
+        index="month",
+        columns="entity",
+        values="value",
+    ).sort_index()
+
+    unit = (
+        "Minutes"
+        if selection.metric == "Retard moyen à l’arrivée"
+        else "Taux (%)"
+    )
+
+    st.line_chart(chart_data, x_label="Mois", y_label=unit)
