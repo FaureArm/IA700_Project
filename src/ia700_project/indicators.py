@@ -37,22 +37,21 @@ def compute_overview_summary(data: pd.DataFrame) -> pd.DataFrame:
 def scheduled_trains_count(
     data: pd.DataFrame, selection: TravelSelection
 ) -> int | None:
-    """Expected return: an intenger expressing number of scheduled trains for the selected
-    route and date.
-    """
+    """Return the number of scheduled trains for a selected route and date."""
     return None
 
 
 def cancellation_rate(
     data: pd.DataFrame, selection: TravelSelection
 ) -> float | None:
-    """Expected return: percentage (0-100) of trains cancelled for a given selection."""
+    """Return the cancellation percentage for a given selection."""
     return None
 
 
 def delay_rate(data: pd.DataFrame, selection: TravelSelection) -> float | None:
-    """Expected return: percentage (0-100) of late trains for a given selection.
-    NB: late means bigger than 15 min ?
+    """Return the percentage of late trains for a given selection.
+
+    A late train may be defined as a train delayed by more than 15 minutes.
     """
     return None
 
@@ -60,8 +59,9 @@ def delay_rate(data: pd.DataFrame, selection: TravelSelection) -> float | None:
 def avg_delay_length(
     data: pd.DataFrame, selection: TravelSelection
 ) -> float | None:
-    """Expected return: integer expressin avg delay in minutes for a given selection.
-    NB: Count delays below 15 min?
+    """Return the average arrival delay in minutes for a given selection.
+
+    The treatment of delays below 15 minutes remains to be defined.
     """
     return None
 
@@ -69,12 +69,13 @@ def avg_delay_length(
 def time_chart(
     data: pd.DataFrame, selection: TravelSelection
 ) -> pd.DataFrame | None:
-    """Expected returns: A dataframe with cols:
-        month
-        cancellation_rate_pct
-        arrival_delay_rate_pct
-        mean_arrival_delay_minutes
-    For the selection expressed in the argument
+    """Return monthly indicators for the selected route and date range.
+
+    Expected columns:
+        - month
+        - cancellation_rate_pct
+        - arrival_delay_rate_pct
+        - mean_arrival_delay_minutes
     """
     return None
 
@@ -82,8 +83,9 @@ def time_chart(
 def cause_of_delays_ranking(
     data: pd.DataFrame, selection: TravelSelection
 ) -> pd.DataFrame | None:
-    """Expected return: dataframe sorted by causes of delays for a given selection, ranked from highest to lowest.
-    The goal is to see which causes are the most frequent for a given selection.
+    """Return delay causes ranked from most to least frequent.
+
+    The ranking identifies the most frequent causes for a given selection.
     """
     return None
 
@@ -94,11 +96,13 @@ def cause_of_delays_ranking(
 def ranking(
     data: pd.DataFrame, selection: ComparisonSelection
 ) -> pd.DataFrame | None:
-    """Expected return: for the selected variables, return a global ranking as a dataframe:
-    rank
-    entity: liaison or station label ("PARIS LYON → LYON PART DIEU" or "PARIS LYON")
-    value: calculated value of the indicator selected in the sidebar
-    scheduled_train_count
+    """Return a global ranking for the selected comparison variables.
+
+    Expected columns:
+        - rank
+        - entity: route or station label
+        - value: calculated indicator value
+        - scheduled_train_count
     """
     return None
 
@@ -108,9 +112,11 @@ def comparison_time_chart(
     selection: ComparisonSelection,
     ranking_data: pd.DataFrame,
 ) -> pd.DataFrame | None:
-    """Expected return: a df covering the entities provided in ranking_data
-    month
-    entity: liaison or station label ("PARIS LYON → LYON PART DIEU" or "PARIS LYON")
-    value: calculated value of the indicator selected in the sidebar
+    """Return monthly indicator values for the ranked entities.
+
+    Expected columns:
+        - month
+        - entity: route or station label
+        - value: calculated indicator value
     """
     return None

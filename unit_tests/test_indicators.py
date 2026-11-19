@@ -6,10 +6,8 @@ from ia700_project.indicators import compute_overview_summary
 
 
 def test_compute_overview_summary_returns_empty_dataframe():
-    """An empty dataset should return an empty dataframe with expected columns."""
-    data = pd.DataFrame(
-        columns=["gare_depart", "gare_arrivee", "date"]
-    )
+    """Return an empty dataframe with the expected columns for empty data."""
+    data = pd.DataFrame(columns=["gare_depart", "gare_arrivee", "date"])
 
     result = compute_overview_summary(data)
 
@@ -61,9 +59,7 @@ def test_compute_overview_summary_ignores_incomplete_routes():
         {
             "gare_depart": ["PARIS LYON", None, "MARSEILLE"],
             "gare_arrivee": ["LYON PART DIEU", "PARIS LYON", None],
-            "date": pd.to_datetime(
-                ["2025-01-01", "2025-02-01", "2025-03-01"]
-            ),
+            "date": pd.to_datetime(["2025-01-01", "2025-02-01", "2025-03-01"]),
         }
     )
 
