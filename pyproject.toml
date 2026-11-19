@@ -60,6 +60,7 @@ addopts = [
     "--cov=ia700_project.models",
     "--cov=ia700_project.constants",
     "--cov=ia700_project.pages",
+    "--cov=ia700_project.streamlit_app",
     "--cov-report=term-missing",
     "--cov-fail-under=90"
 ]
