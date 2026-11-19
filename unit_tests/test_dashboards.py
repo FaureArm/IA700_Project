@@ -1,4 +1,3 @@
-
 """Unit tests for the dashboards module."""
 
 from datetime import date
@@ -98,9 +97,7 @@ def test_render_network_map(mock_streamlit, monkeypatch):
 
     dashboards.render_network_map()
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Le réseau en un regard"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Le réseau en un regard")
     map_renderer.assert_called_once_with()
 
 
@@ -118,12 +115,8 @@ def test_render_overview_metrics_without_data(mock_streamlit, summary):
 
     columns = mock_streamlit.created_columns[0]
 
-    columns[0].metric.assert_called_once_with(
-        "Liaisons couvertes", "—"
-    )
-    columns[1].metric.assert_called_once_with(
-        "Gares représentées", "—"
-    )
+    columns[0].metric.assert_called_once_with("Liaisons couvertes", "—")
+    columns[1].metric.assert_called_once_with("Gares représentées", "—")
 
 
 def test_render_overview_metrics_with_data(mock_streamlit):
@@ -142,12 +135,8 @@ def test_render_overview_metrics_with_data(mock_streamlit):
 
     columns = mock_streamlit.created_columns[0]
 
-    columns[0].metric.assert_called_once_with(
-        "Liaisons couvertes", "1 234"
-    )
-    columns[1].metric.assert_called_once_with(
-        "Gares représentées", "56"
-    )
+    columns[0].metric.assert_called_once_with("Liaisons couvertes", "1 234")
+    columns[1].metric.assert_called_once_with("Gares représentées", "56")
 
     mock_streamlit.caption.assert_not_called()
 
@@ -210,9 +199,7 @@ def test_render_summary_metrics(
         ("Retard moyen à l’arrivée", "18.5 min"),
     ]
 
-    for column, expected in zip(
-        columns, expected_metrics, strict=True
-    ):
+    for column, expected in zip(columns, expected_metrics, strict=True):
         column.metric.assert_called_once_with(*expected)
 
 
@@ -246,12 +233,8 @@ def test_render_summary_metrics_with_missing_values(
         "Retard moyen à l’arrivée",
     ]
 
-    for column, label in zip(
-        columns, expected_labels, strict=True
-    ):
-        column.metric.assert_called_once_with(
-            label, "Indisponible"
-        )
+    for column, label in zip(columns, expected_labels, strict=True):
+        column.metric.assert_called_once_with(label, "Indisponible")
 
 
 @pytest.mark.parametrize(
@@ -264,9 +247,7 @@ def test_render_exploration_time_evolution_without_data(
     """Test monthly evolution when no data is available."""
     dashboards.render_exploration_time_evolution(history)
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Évolution dans le temps"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Évolution dans le temps")
     mock_streamlit.info.assert_called_once_with(
         "Aucun historique mensuel disponible pour cette liaison."
     )
@@ -295,9 +276,7 @@ def test_render_exploration_time_evolution_with_data(mock_streamlit):
     ]
 
     second_chart = mock_streamlit.line_chart.call_args_list[1]
-    assert list(second_chart.args[0].columns) == [
-        "Retard moyen à l’arrivée"
-    ]
+    assert list(second_chart.args[0].columns) == ["Retard moyen à l’arrivée"]
 
 
 @pytest.mark.parametrize(
@@ -308,9 +287,7 @@ def test_render_delay_causes_without_data(mock_streamlit, causes):
     """Test delay causes when no data is available."""
     dashboards.render_delay_causes(causes)
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Causes des retards"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Causes des retards")
     mock_streamlit.info.assert_called_once_with(
         "Aucune répartition des causes disponible."
     )
@@ -341,9 +318,7 @@ def test_render_exploration_dashboard(
     travel_selection,
 ):
     """Test the complete exploration dashboard."""
-    monthly = pd.DataFrame(
-        {"month": [pd.Timestamp("2025-01-01")]}
-    )
+    monthly = pd.DataFrame({"month": [pd.Timestamp("2025-01-01")]})
     causes = pd.DataFrame({"cause": ["Signalisation"]})
 
     summary_renderer = MagicMock()
@@ -353,44 +328,26 @@ def test_render_exploration_dashboard(
     time_function = MagicMock(return_value=monthly)
     causes_function = MagicMock(return_value=causes)
 
-    monkeypatch.setattr(
-        dashboards, "render_summary_metrics", summary_renderer
-    )
-    monkeypatch.setattr(
-        dashboards, "time_chart", time_function
-    )
-    monkeypatch.setattr(
-        dashboards, "cause_of_delays_ranking", causes_function
-    )
+    monkeypatch.setattr(dashboards, "render_summary_metrics", summary_renderer)
+    monkeypatch.setattr(dashboards, "time_chart", time_function)
+    monkeypatch.setattr(dashboards, "cause_of_delays_ranking", causes_function)
     monkeypatch.setattr(
         dashboards, "render_exploration_time_evolution", time_renderer
     )
-    monkeypatch.setattr(
-        dashboards, "render_delay_causes", causes_renderer
-    )
+    monkeypatch.setattr(dashboards, "render_delay_causes", causes_renderer)
 
-    dashboards.render_exploration_dashboard(
-        sample_data, travel_selection
-    )
+    dashboards.render_exploration_dashboard(sample_data, travel_selection)
 
     mock_streamlit.subheader.assert_any_call("Paris → Lyon")
 
-    summary_renderer.assert_called_once_with(
-        sample_data, travel_selection
-    )
-    time_function.assert_called_once_with(
-        sample_data, travel_selection
-    )
-    causes_function.assert_called_once_with(
-        sample_data, travel_selection
-    )
+    summary_renderer.assert_called_once_with(sample_data, travel_selection)
+    time_function.assert_called_once_with(sample_data, travel_selection)
+    causes_function.assert_called_once_with(sample_data, travel_selection)
 
     time_renderer.assert_called_once_with(monthly)
     causes_renderer.assert_called_once_with(causes)
 
-    mock_streamlit.expander.assert_called_once_with(
-        "Comprendre les résultats"
-    )
+    mock_streamlit.expander.assert_called_once_with("Comprendre les résultats")
 
 
 # ---------------------------------------------------------------------
@@ -398,28 +355,18 @@ def test_render_exploration_dashboard(
 # ---------------------------------------------------------------------
 
 
-def test_render_ranking_with_none(
-    mock_streamlit, comparison_selection
-):
+def test_render_ranking_with_none(mock_streamlit, comparison_selection):
     """Test ranking when data is unavailable."""
     dashboards.render_ranking(None, comparison_selection)
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Classement · Liaison"
-    )
-    mock_streamlit.info.assert_called_once_with(
-        "Aucunes données disponibles."
-    )
+    mock_streamlit.subheader.assert_called_once_with("Classement · Liaison")
+    mock_streamlit.info.assert_called_once_with("Aucunes données disponibles.")
     mock_streamlit.dataframe.assert_not_called()
 
 
-def test_render_ranking_with_empty_data(
-    mock_streamlit, comparison_selection
-):
+def test_render_ranking_with_empty_data(mock_streamlit, comparison_selection):
     """Test ranking when no results match the selection."""
-    dashboards.render_ranking(
-        pd.DataFrame(), comparison_selection
-    )
+    dashboards.render_ranking(pd.DataFrame(), comparison_selection)
 
     mock_streamlit.info.assert_called_once_with(
         "Aucun résultat ne correspond aux critères sélectionnés."
@@ -427,9 +374,7 @@ def test_render_ranking_with_empty_data(
     mock_streamlit.dataframe.assert_not_called()
 
 
-def test_render_ranking_with_data(
-    mock_streamlit, comparison_selection
-):
+def test_render_ranking_with_data(mock_streamlit, comparison_selection):
     """Test ranking with valid results."""
     ranking_data = pd.DataFrame(
         {
@@ -438,13 +383,9 @@ def test_render_ranking_with_data(
         }
     )
 
-    dashboards.render_ranking(
-        ranking_data, comparison_selection
-    )
+    dashboards.render_ranking(ranking_data, comparison_selection)
 
-    mock_streamlit.subheader.assert_called_once_with(
-        "Classement · Liaison"
-    )
+    mock_streamlit.subheader.assert_called_once_with("Classement · Liaison")
     mock_streamlit.caption.assert_called_once_with(
         "Taux de retard · 10 résultats maximum · "
         "minimum 100 circulations prévues"
@@ -458,13 +399,9 @@ def test_render_comparison_time_evolution_with_none(
     mock_streamlit, comparison_selection
 ):
     """Test comparison evolution when data is unavailable."""
-    dashboards.render_comparison_time_evolution(
-        None, comparison_selection
-    )
+    dashboards.render_comparison_time_evolution(None, comparison_selection)
 
-    mock_streamlit.info.assert_called_once_with(
-        "Aucunes données disponibles."
-    )
+    mock_streamlit.info.assert_called_once_with("Aucunes données disponibles.")
     mock_streamlit.line_chart.assert_not_called()
 
 
@@ -513,15 +450,12 @@ def test_render_comparison_time_evolution_with_data(
         }
     )
 
-    dashboards.render_comparison_time_evolution(
-        history, selection
-    )
+    dashboards.render_comparison_time_evolution(history, selection)
 
     mock_streamlit.line_chart.assert_called_once()
 
     assert (
-        mock_streamlit.line_chart.call_args.kwargs["y_label"]
-        == expected_unit
+        mock_streamlit.line_chart.call_args.kwargs["y_label"] == expected_unit
     )
 
 
@@ -537,28 +471,18 @@ def test_render_comparison_dashboard_with_empty_ranking(
     evolution_renderer = MagicMock()
     comparison_chart = MagicMock()
 
-    monkeypatch.setattr(
-        dashboards, "ranking", ranking_function
-    )
-    monkeypatch.setattr(
-        dashboards, "render_ranking", ranking_renderer
-    )
+    monkeypatch.setattr(dashboards, "ranking", ranking_function)
+    monkeypatch.setattr(dashboards, "render_ranking", ranking_renderer)
     monkeypatch.setattr(
         dashboards,
         "render_comparison_time_evolution",
         evolution_renderer,
     )
-    monkeypatch.setattr(
-        dashboards, "comparison_time_chart", comparison_chart
-    )
+    monkeypatch.setattr(dashboards, "comparison_time_chart", comparison_chart)
 
-    dashboards.render_comparison_dashboard(
-        sample_data, comparison_selection
-    )
+    dashboards.render_comparison_dashboard(sample_data, comparison_selection)
 
-    ranking_function.assert_called_once_with(
-        sample_data, comparison_selection
-    )
+    ranking_function.assert_called_once_with(sample_data, comparison_selection)
     ranking_renderer.assert_called_once_with(
         ranking_function.return_value, comparison_selection
     )
@@ -585,36 +509,24 @@ def test_render_comparison_dashboard_with_ranking(
             "value": [10],
         }
     )
-    history = pd.DataFrame(
-        {"month": [pd.Timestamp("2025-01-01")]}
-    )
+    history = pd.DataFrame({"month": [pd.Timestamp("2025-01-01")]})
 
     ranking_function = MagicMock(return_value=ranking_data)
     chart_function = MagicMock(return_value=history)
     evolution_renderer = MagicMock()
 
-    monkeypatch.setattr(
-        dashboards, "ranking", ranking_function
-    )
-    monkeypatch.setattr(
-        dashboards, "render_ranking", MagicMock()
-    )
-    monkeypatch.setattr(
-        dashboards, "comparison_time_chart", chart_function
-    )
+    monkeypatch.setattr(dashboards, "ranking", ranking_function)
+    monkeypatch.setattr(dashboards, "render_ranking", MagicMock())
+    monkeypatch.setattr(dashboards, "comparison_time_chart", chart_function)
     monkeypatch.setattr(
         dashboards,
         "render_comparison_time_evolution",
         evolution_renderer,
     )
 
-    dashboards.render_comparison_dashboard(
-        sample_data, comparison_selection
-    )
+    dashboards.render_comparison_dashboard(sample_data, comparison_selection)
 
     chart_function.assert_called_once_with(
         sample_data, comparison_selection, ranking_data
     )
-    evolution_renderer.assert_called_once_with(
-        history, comparison_selection
-    )
+    evolution_renderer.assert_called_once_with(history, comparison_selection)
