@@ -123,9 +123,7 @@ def _delay_pct(data: pd.DataFrame) -> float | None:
 def _average_delay(data: pd.DataFrame) -> float | None:
     """Weight mean delay of late trains by their number per month."""
     valid = _valid_delays(_valid_services(data))
-    valid = valid.loc[
-        valid[_DELAY_COUNT].gt(0) & valid[_AVG_DELAY].notna()
-    ]
+    valid = valid.loc[valid[_DELAY_COUNT].gt(0) & valid[_AVG_DELAY].notna()]
     if valid.empty:
         return None
     weights = valid[_DELAY_COUNT]
@@ -288,9 +286,7 @@ def cause_of_delays_ranking(
         return None
     causes = list(_CAUSES)
     totals = route[causes].sum(axis=1, min_count=1)
-    valid = route.loc[
-        route[_DELAY_COUNT].gt(0) & totals.between(90, 100.1)
-    ]
+    valid = route.loc[route[_DELAY_COUNT].gt(0) & totals.between(90, 100.1)]
     if valid.empty:
         return None
 
