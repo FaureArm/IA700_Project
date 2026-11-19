@@ -46,8 +46,8 @@ def travel_selection():
 def comparison_selection():
     """Create a sample comparison selection."""
     return ComparisonSelection(
-        entity="Liaison",
-        metric="Taux de retard",
+        entity="Liaisons",
+        metric="Taux de retard à l’arrivée",
         top_n=10,
         min_volume=100,
     )
@@ -90,7 +90,7 @@ def test_render_overview_dashboard(mock_streamlit, monkeypatch, sample_data):
     network_map.assert_called_once_with()
 
 
-def test_render_network_map(mock_streamlit, monkeypatch):
+def test_render_network_map(mock_streamlit, monkeypatch, sample_data):
     """Test the network map section."""
     map_renderer = MagicMock()
     monkeypatch.setattr(dashboards, "render_tgv_map", map_renderer)
@@ -299,7 +299,7 @@ def test_render_delay_causes_with_data(mock_streamlit):
     causes = pd.DataFrame(
         {
             "cause": ["Signalisation"],
-            "count": [12],
+            "percentage": [12.0],
         }
     )
 
@@ -308,6 +308,18 @@ def test_render_delay_causes_with_data(mock_streamlit):
     mock_streamlit.dataframe.assert_called_once_with(
         causes,
         hide_index=True,
+        column_config={
+            "cause": mock_streamlit.column_config.TextColumn.return_value,
+            "percentage": (
+                mock_streamlit.column_config.NumberColumn.return_value
+            ),
+        },
+    )
+    mock_streamlit.column_config.TextColumn.assert_called_once_with(
+        "Cause du retard", width="large"
+    )
+    mock_streamlit.column_config.NumberColumn.assert_called_once_with(
+        "Part des retards (%)", format="%.2f"
     )
 
 
@@ -359,7 +371,7 @@ def test_render_ranking_with_none(mock_streamlit, comparison_selection):
     """Test ranking when data is unavailable."""
     dashboards.render_ranking(None, comparison_selection)
 
-    mock_streamlit.subheader.assert_called_once_with("Classement · Liaison")
+    mock_streamlit.subheader.assert_called_once_with("Classement · Liaisons")
     mock_streamlit.info.assert_called_once_with("Aucunes données disponibles.")
     mock_streamlit.dataframe.assert_not_called()
 
@@ -378,20 +390,37 @@ def test_render_ranking_with_data(mock_streamlit, comparison_selection):
     """Test ranking with valid results."""
     ranking_data = pd.DataFrame(
         {
+            "rank": [1],
             "entity": ["Paris → Lyon"],
             "value": [10],
+            "scheduled_train_count": [100],
         }
     )
 
     dashboards.render_ranking(ranking_data, comparison_selection)
 
-    mock_streamlit.subheader.assert_called_once_with("Classement · Liaison")
+    mock_streamlit.subheader.assert_called_once_with("Classement · Liaisons")
     mock_streamlit.caption.assert_called_once_with(
-        "Taux de retard · 10 résultats maximum · "
+        "Taux de retard à l’arrivée · 10 résultats maximum · "
         "minimum 100 circulations prévues"
     )
     mock_streamlit.dataframe.assert_called_once_with(
-        ranking_data, hide_index=True
+        ranking_data,
+        hide_index=True,
+        column_config={
+            "rank": mock_streamlit.column_config.NumberColumn.return_value,
+            "entity": mock_streamlit.column_config.TextColumn.return_value,
+            "value": mock_streamlit.column_config.NumberColumn.return_value,
+            "scheduled_train_count": (
+                mock_streamlit.column_config.NumberColumn.return_value
+            ),
+        },
+    )
+    mock_streamlit.column_config.TextColumn.assert_called_once_with(
+        "Liaison", width="large"
+    )
+    mock_streamlit.column_config.NumberColumn.assert_any_call(
+        "Taux de retard à l’arrivée (%)", format="%.2f"
     )
 
 
