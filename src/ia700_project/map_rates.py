@@ -3,47 +3,55 @@
 import pandas as pd
 import streamlit as st
 
-from ia700_project.constants import ARRIVAL, CANCELLED, DEPARTURE, PLANNED
-
-ARRIVAL_DELAY_COUNT = "Nombre de trains en retard à l'arrivée"
-
+ARRIVAL_DELAY_COUNT = "nb_train_retard_arrivee"
 
 def aggregate_map_rates(
     rows: pd.DataFrame,
 ) -> dict[tuple[str, str], dict[str, float]]:
-    """Aggregate monthly counts into rates by departure and arrival."""
-    totals = rows.groupby([DEPARTURE, ARRIVAL], as_index=False)[
-        [PLANNED, CANCELLED, ARRIVAL_DELAY_COUNT]
-    ].sum()
+    """Aggregate valid cleaned monthly counts by departure and arrival."""
+    valid = rows.loc[
+        rows["nb_train_prevu"].gt(0)
+        & rows["nb_annulation"].ge(0)
+        & rows["nb_annulation"].le(rows["nb_train_prevu"])
+    ]
 
     result = {}
-    for departure, arrival, planned, cancelled, delayed in totals.itertuples(
-        index=False, name=None
+    for (departure, arrival), group in valid.groupby(
+        ["gare_depart", "gare_arrivee"]
     ):
-        if planned <= 0:
-            continue
+        planned = group["nb_train_prevu"].sum()
+        cancelled = group["nb_annulation"].sum()
 
         rates = {
-            "cancellation": cancelled / planned,
-            "disruption": (delayed + cancelled) / planned,
+            "cancellation": float(cancelled / planned),
         }
 
-        if planned > cancelled:
-            rates["delay"] = delayed / (planned - cancelled)
+        # NB: keep valid cancellations even if the delay counter is missing
+        operated = group["nb_train_prevu"] - group["nb_annulation"]
+        valid_delays = group.loc[
+            group[ARRIVAL_DELAY_COUNT].ge(0)
+            & group[ARRIVAL_DELAY_COUNT].le(operated)
+        ]
+
+        if not valid_delays.empty:
+            planned = valid_delays["nb_train_prevu"].sum()
+            cancelled = valid_delays["nb_annulation"].sum()
+            delayed = valid_delays[ARRIVAL_DELAY_COUNT].sum()
+
+            rates["disruption"] = float(
+                (delayed + cancelled) / planned
+            )
+
+            if planned > cancelled:
+                rates["delay"] = float(delayed / (planned - cancelled))
 
         result[departure, arrival] = rates
 
     return result
 
-
 @st.cache_data(show_spinner=False)
 def load_map_rates(
-    path: str, modified_at: int
+    data: pd.DataFrame,
 ) -> dict[tuple[str, str], dict[str, float]]:
-    """Read the CSV and cache the map rates until its timestamp changes."""
-    rows = pd.read_csv(
-        path,
-        sep=";",
-        usecols=[DEPARTURE, ARRIVAL, PLANNED, CANCELLED, ARRIVAL_DELAY_COUNT],
-    )
-    return aggregate_map_rates(rows)
+    """Cache the map rates computed from the already cleaned dataset."""
+    return aggregate_map_rates(data)

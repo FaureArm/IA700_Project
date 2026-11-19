@@ -27,13 +27,13 @@ def render_overview_dashboard(data: pd.DataFrame) -> None:
     render_overview_metrics(overview_summary)
     # to render some generic values on top, could be switched to a sidebar,
     # or smth else perhaps idk?
-    render_network_map()  # to render the map with overlay
+    render_network_map(data)  # to render the map with overlay
 
 
-def render_network_map() -> None:
+def render_network_map(data: pd.DataFrame) -> None:
     """Add the network heading and interactive map to the overview."""
     st.subheader("Le réseau en un regard")
-    render_tgv_map()
+    render_tgv_map(data)
 
 
 def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
@@ -204,7 +204,6 @@ def render_delay_causes(delay_causes: pd.DataFrame | None) -> None:
         column_config={
             "cause": st.column_config.TextColumn(
                 "Cause du retard",
-                width="large",
             ),
             "percentage": st.column_config.NumberColumn(
                 "Part des retards (%)",
