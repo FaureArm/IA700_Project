@@ -299,7 +299,7 @@ def test_render_tgv_map_returns_when_no_routes(monkeypatch) -> None:
     assert messages == []
 
 
-def test_render_tgv_map_draws_routes(monkeypatch) -> None:
+def test_render_tgv_map_draws_routes(monkeypatch, tmp_path) -> None:
     """Check that routes are prepared and rendered with Pydeck."""
     routes = [
         {
@@ -316,6 +316,11 @@ def test_render_tgv_map_draws_routes(monkeypatch) -> None:
         },
     ]
     captured = {}
+
+    # Create a temporary file so DATA_PATH.stat() works in CI.
+    data_file = tmp_path / "data.csv"
+    data_file.write_text("test", encoding="utf-8")
+    monkeypatch.setattr(map_view, "DATA_PATH", data_file)
 
     monkeypatch.setattr(
         map_view,
