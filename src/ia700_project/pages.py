@@ -4,9 +4,13 @@ import pandas as pd
 import streamlit as st
 
 from ia700_project.dashboards import (
+    render_cleaning_dashboard,
     render_comparison_dashboard,
+    render_data_source_dashboard,
     render_exploration_dashboard,
+    render_methodology_dashboard,
     render_overview_dashboard,
+    render_quality_dashboard,
 )
 from ia700_project.sidebar import (
     comparison_sidebar,
@@ -71,7 +75,19 @@ def comparison_page(data: pd.DataFrame) -> None:
     render_comparison_dashboard(data, selection)
 
 
-def methods_page():
+def methods_page() -> None:
     """Render the methods page."""
     st.title("Données et méthodes")
-    return
+    st.markdown(
+        "D’où viennent les données ? Comment les avons-nous préparées ? "
+        "Retrouvez les choix qui permettent de lire nos résultats."
+    )
+    st.caption(
+        "Source : SNCF Open Data · Régularité mensuelle TGV (AQST) · "
+        "Méthode documentée dans le notebook EDA"
+    )
+
+    render_data_source_dashboard()
+    render_cleaning_dashboard()
+    render_quality_dashboard()
+    render_methodology_dashboard()
