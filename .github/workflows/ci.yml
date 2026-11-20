@@ -1,0 +1,99 @@
+
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  tests:
+    name: Tests and Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run Ruff lint checks
+        run: |
+          uv run ruff check \
+            src/ia700_project/analysis.py \
+            src/ia700_project/cleaning.py \
+            src/ia700_project/routes_metrics.py \
+            src/ia700_project/dashboards.py \
+            src/ia700_project/map_rates.py \
+            src/ia700_project/map_view.py \
+            src/ia700_project/sidebar.py \
+            src/ia700_project/indicators.py \
+            src/ia700_project/data.py \
+            src/ia700_project/download_data.py \
+            src/ia700_project/models.py \
+            src/ia700_project/constants.py \
+            src/ia700_project/pages.py \
+            src/ia700_project/streamlit_app.py \
+            unit_tests/test_analysis.py \
+            unit_tests/test_cleaning.py \
+            unit_tests/test_routes_metrics.py \
+            unit_tests/test_dashboards.py \
+            unit_tests/test_map_rates.py \
+            unit_tests/test_map_view.py \
+            unit_tests/test_sidebar.py \
+            unit_tests/test_indicators.py \
+            unit_tests/test_data.py \
+            unit_tests/test_download_data.py \
+            unit_tests/test_models.py \
+            unit_tests/test_constants.py \
+            unit_tests/test_pages.py \
+            unit_tests/test_streamlit_app.py
+
+
+      - name: Check code formatting
+        run: |
+          uv run ruff format --check \
+            src/ia700_project/analysis.py \
+            src/ia700_project/cleaning.py \
+            src/ia700_project/routes_metrics.py \
+            src/ia700_project/dashboards.py \
+            src/ia700_project/map_rates.py \
+            src/ia700_project/map_view.py \
+            src/ia700_project/sidebar.py \
+            src/ia700_project/indicators.py \
+            src/ia700_project/data.py \
+            src/ia700_project/download_data.py \
+            src/ia700_project/models.py \
+            src/ia700_project/constants.py \
+            src/ia700_project/pages.py \
+            src/ia700_project/streamlit_app.py \
+            unit_tests/test_analysis.py \
+            unit_tests/test_cleaning.py \
+            unit_tests/test_routes_metrics.py \
+            unit_tests/test_dashboards.py \
+            unit_tests/test_map_rates.py \
+            unit_tests/test_map_view.py \
+            unit_tests/test_sidebar.py \
+            unit_tests/test_indicators.py \
+            unit_tests/test_data.py \
+            unit_tests/test_download_data.py \
+            unit_tests/test_models.py \
+            unit_tests/test_constants.py \
+            unit_tests/test_pages.py \
+            unit_tests/test_streamlit_app.py
+
+      - name: Run unit tests with coverage
+        run: uv run pytest
