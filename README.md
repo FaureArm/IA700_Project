@@ -1,8 +1,8 @@
 # RAILNSIGHT
 
 <p align="center">
-  <img src="https://img.shields.io/badge/RAILNSIGHT-TGV%20RELIABILITY-E60000?style=for-the-badge" alt="Railnsight">
-  <img src="https://img.shields.io/badge/PYTHON-3.13-172B4D?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.13">
+  <img src="https://img.shields.io/badge/RAILNSIGHT-RELIABILITY%20INTELLIGENCE-E60000?style=for-the-badge" alt="Railnsight">
+  <img src="https://img.shields.io/badge/PYTHON-3.13-172B4D?style=for-the-badge&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/STREAMLIT-APPLICATION-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
   <img src="https://img.shields.io/badge/COVERAGE-95.13%25-16865B?style=for-the-badge" alt="Coverage">
 </p>
@@ -16,22 +16,24 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/FaureArm/IA700_Project">GitHub Repository</a>
-  &nbsp; • &nbsp;
-  <a href="https://ressources.data.sncf.com/explore/dataset/regularite-mensuelle-tgv-aqst/information/">Official SNCF Dataset</a>
+  <a href="https://github.com/FaureArm/IA700_Project">PROJECT REPOSITORY</a>
+  &nbsp; | &nbsp;
+  <a href="https://ressources.data.sncf.com/explore/dataset/regularite-mensuelle-tgv-aqst/information/">OFFICIAL SNCF DATASET</a>
+  &nbsp; | &nbsp;
+  <a href="datasheet.md">DATASET DATASHEET</a>
 </p>
 
 ---
 
-## 01. Project Overview
+## 01 | PROJECT OVERVIEW
 
-**Railnsight** is a data analytics application developed as part of the IA700 course at Télécom Paris, within the MSc in Artificial Intelligence program.
+**Railnsight** is a data analytics web application developed as part of the Mastère Spécialisé® IA Multimodale & Autonome at Télécom Paris.
 
 The platform transforms historical SNCF railway performance data into interactive visual insights. It provides travelers with a structured way to investigate the reliability of TGV connections, identify recurring disruptions and compare service performance across routes and periods.
 
 ### The Challenge
 
-Railway reliability is not uniform across connections or over time. Delays, cancellations and operational disruptions can significantly affect the passenger experience.
+Railway reliability varies across connections and over time. Delays, cancellations and operational disruptions can significantly affect the passenger experience.
 
 Railnsight addresses the following objective:
 
@@ -39,15 +41,15 @@ Railnsight addresses the following objective:
 
 ### Our Approach
 
-The application combines data cleaning, statistical analysis, historical performance indicators and geographic visualization to make railway reliability easier to understand.
+The application combines data collection, data cleaning, statistical analysis, historical performance indicators and geographic visualization to make railway reliability easier to understand.
 
 ---
 
-## 02. Application Features
+## 02 | APPLICATION FEATURES
 
-Railnsight is organized into dedicated analytical dashboards.
+Railnsight is organized into seven dedicated analytical dashboards.
 
-### 01 | Network Overview
+### 01. Network Overview
 
 <sub>GEOGRAPHIC ANALYSIS</sub>
 
@@ -58,7 +60,7 @@ An interactive representation of the TGV network, providing a high-level view of
 - Number of railway connections and stations.
 - Network-level reliability indicators.
 
-### 02 | Journey Exploration
+### 02. Journey Exploration
 
 <sub>CONNECTION-LEVEL ANALYSIS</sub>
 
@@ -71,7 +73,7 @@ A detailed analysis of a selected railway connection over a chosen historical pe
 - Historical performance evolution.
 - Ranking and analysis of delay causes.
 
-### 03 | Connection Comparison
+### 03. Connection Comparison
 
 <sub>COMPARATIVE PERFORMANCE</sub>
 
@@ -82,7 +84,7 @@ A comparative view designed to identify differences in reliability across railwa
 - Historical performance trends.
 - Identification of differences in service reliability.
 
-### 04 | Data Sources
+### 04. Data Sources
 
 <sub>DATA TRANSPARENCY</sub>
 
@@ -92,7 +94,7 @@ An overview of the datasets used throughout the application.
 - Dataset structure and characteristics.
 - Information about the data used for analysis.
 
-### 05 | Data Cleaning
+### 05. Data Cleaning
 
 <sub>DATA PREPARATION</sub>
 
@@ -103,7 +105,7 @@ A dedicated environment for understanding and demonstrating the data preparation
 - Specific historical data corrections.
 - Interactive examples illustrating cleaning operations.
 
-### 06 | Data Quality
+### 06. Data Quality
 
 <sub>DATA VALIDATION</sub>
 
@@ -113,7 +115,7 @@ An overview of the controls implemented to assess the consistency and reliabilit
 - Validation indicators.
 - Detailed explanations of quality controls.
 
-### 07 | Methodology
+### 07. Methodology
 
 <sub>ANALYTICAL FRAMEWORK</sub>
 
@@ -125,21 +127,57 @@ Documentation of the analytical concepts and indicators used throughout Railnsig
 
 ---
 
-## 03. Data Source
+## 03 | DATA SOURCE
 
 The application uses data from the official SNCF Open Data platform.
 
 **Dataset:** Monthly TGV Regularity (AQST)
 
-[ACCESS THE OFFICIAL DATASET](https://ressources.data.sncf.com/explore/dataset/regularite-mensuelle-tgv-aqst/information/)
+[ACCESS THE OFFICIAL SNCF DATASET](https://ressources.data.sncf.com/explore/dataset/regularite-mensuelle-tgv-aqst/information/)
 
 The dataset provides historical monthly information on TGV regularity, including delays, cancellations and their reported causes.
 
-All analytical outputs are based on the available historical observations. They describe past performance and should not be interpreted as guaranteed predictions of future train punctuality.
+All analytical outputs are based on available historical observations. They describe past performance and should not be interpreted as guaranteed predictions of future train punctuality.
 
 ---
 
-## 04. Technology Stack
+## 04 | DATA COLLECTION & DATASHEET
+
+Transparency and data traceability are essential to the Railnsight project.
+
+Beyond the application itself, we documented the dataset acquisition process, its structure, its limitations and the preprocessing decisions applied before analysis.
+
+The project includes a dedicated **Datasheet** describing the SNCF monthly TGV regularity dataset (AQST).
+
+### Datasheet Documentation
+
+The datasheet provides detailed information about:
+
+| Section | Documentation |
+|:--|:--|
+| Motivation | Dataset purpose, original authors and funding source |
+| Composition | Observations, attributes, coverage period and missing values |
+| Collection Process | Data acquisition, aggregation and publication frequency |
+| Preprocessing | Data cleaning rules, corrections and validation decisions |
+| Uses | Analytical applications and potential future uses |
+| Distribution | Dataset availability and distribution |
+| Maintenance | Dataset updates and version information |
+
+Particular attention is given to historical inconsistencies, COVID-period observations, SNCF publication anomalies, duplicated records and delay-cause percentages.
+
+### Full Documentation
+
+<p align="center">
+  <a href="datasheet.md">
+    <img src="https://img.shields.io/badge/READ%20THE-DATASET%20DATASHEET-E60000?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Read the Datasheet">
+  </a>
+</p>
+
+The datasheet provides the methodological foundation for understanding the processed dataset and the analytical decisions implemented in Railnsight.
+
+---
+
+## 05 | TECHNOLOGY STACK
 
 The application is built around a Python-based data analytics stack.
 
@@ -156,7 +194,7 @@ The application is built around a Python-based data analytics stack.
 
 ---
 
-## 05. Installation & Execution
+## 06 | INSTALLATION & EXECUTION
 
 ### Requirements
 
@@ -165,20 +203,20 @@ The application is built around a Python-based data analytics stack.
 
 Installation instructions: [uv documentation](https://docs.astral.sh/uv/)
 
-### Step 1. Clone the repository
+### Step 01. Clone the repository
 
 ```bash
 git clone https://github.com/FaureArm/IA700_Project.git
 cd IA700_Project
 ```
 
-### Step 2. Install dependencies
+### Step 02. Install dependencies
 
 ```bash
 uv sync --locked
 ```
 
-### Step 3. Launch Railnsight
+### Step 03. Launch Railnsight
 
 ```bash
 uv run streamlit run src/ia700_project/streamlit_app.py
@@ -186,17 +224,15 @@ uv run streamlit run src/ia700_project/streamlit_app.py
 
 Once Streamlit has started, open the local application:
 
-```text
-http://localhost:8501
-```
+**http://localhost:8501**
 
 ---
 
-## 06. Testing & Code Quality
+## 07 | TESTING & CODE QUALITY
 
 Code reliability is supported by an automated testing suite covering the main application components, data processing functions and analytical logic.
 
-### Test execution
+### Test Execution
 
 Run the complete test suite:
 
@@ -210,7 +246,7 @@ Generate a detailed coverage report:
 uv run pytest --cov=ia700_project --cov-report=term-missing
 ```
 
-### Static analysis
+### Static Analysis
 
 Run Ruff lint checks:
 
@@ -245,7 +281,7 @@ uv run ruff format --check .
 
 ---
 
-## 07. Continuous Integration
+## 08 | CONTINUOUS INTEGRATION
 
 Railnsight uses GitHub Actions to automate code quality checks and test execution.
 
@@ -254,7 +290,7 @@ The CI workflow is triggered by:
 - Pushes to the `dev` branch.
 - Pull requests targeting the `dev` branch.
 
-### Automated pipeline
+### Automated Pipeline
 
 | Stage | Validation |
 |:--|:--|
@@ -269,7 +305,7 @@ The pipeline provides a consistent validation process before changes are integra
 
 ---
 
-## 08. Repository Architecture
+## 09 | REPOSITORY ARCHITECTURE
 
 ```text
 IA700_Project/
@@ -280,6 +316,9 @@ IA700_Project/
 │
 ├── data/
 │   └── map/
+│
+├── notebooks/
+│   └── EDA.ipynb
 │
 ├── src/
 │   └── ia700_project/
@@ -307,6 +346,7 @@ IA700_Project/
 │   ├── test_sidebar.py
 │   └── test_streamlit_app.py
 │
+├── datasheet.md
 ├── pyproject.toml
 ├── uv.lock
 └── README.md
@@ -314,15 +354,29 @@ IA700_Project/
 
 ---
 
-## 09. Project Information
+## 10 | PROJECT INFORMATION
+
+### Academic Context
 
 | | |
 |:--|:--|
 | Project | Railnsight |
-| Course | IA700: Python for Production |
 | Institution | Télécom Paris |
-| Academic program | MSc in Artificial Intelligence |
-| Repository | [FaureArm / IA700_Project](https://github.com/FaureArm/IA700_Project) |
+| Programme | Mastère Spécialisé® IA Multimodale & Autonome |
+| Course | Python for Production |
+| Dataset | SNCF Monthly TGV Regularity (AQST) |
+| Repository | [IA700_Project](https://github.com/FaureArm/IA700_Project) |
+
+### Project Team
+
+Railnsight was designed and developed collaboratively by:
+
+| Team Member | GitHub Profile |
+|:--|:--|
+| **Armand FAURE** | [@FaureArm](https://github.com/FaureArm) |
+| **Florian COLLARD** | [@Alreven](https://github.com/Alreven) |
+| **Mathieu DONNADILLE** | [@mdonnadi](https://github.com/mdonnadi) |
+| **Aksil IRBOUH** | [@Aksil-Irbouh](https://github.com/Aksil-Irbouh) |
 
 ---
 
@@ -335,7 +389,8 @@ IA700_Project/
 </p>
 
 <p align="center">
-  Built with Python at Télécom Paris.
+  Developed at Télécom Paris as part of the Mastère Spécialisé® IA Multimodale & Autonome.
+
 </p>
 
 <p align="center">
