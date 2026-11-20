@@ -18,15 +18,17 @@ from ia700_project.pages import (
 # TODO: change all comments and descriptions to english
 
 
-TITLE = "Projet IA700"
+TITLE = "RailInsight"
 
 
 def main() -> None:
     """Configure the application and run the selected page."""
     st.set_page_config(
-        page_title="SNCF Regularity", page_icon="🚆", layout="wide"
+        page_title=f"{TITLE} · Régularité TGV", page_icon="🚆", layout="wide"
     )
     st.sidebar.title(TITLE)
+    st.sidebar.caption("Comprendre la régularité des TGV")
+    st.sidebar.divider()
 
     ## Load data ##
     try:

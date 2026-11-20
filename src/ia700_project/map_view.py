@@ -171,7 +171,7 @@ def render_tgv_map(data: pd.DataFrame) -> None:
         return
 
     st.caption(
-        "Tracés reconstitués. "
+        "Tracés reconstitués par Codex. "
         "Sources: SNCF, Train Nomade, OpenStreetMap, IGN Espagne et ERA."
     )
 

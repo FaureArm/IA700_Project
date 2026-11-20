@@ -30,6 +30,7 @@ def main_page(data: pd.DataFrame) -> None:
         "explorez l’historique de votre trajet et comparez les résultats."
     )
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
+    st.divider()
 
     render_overview_dashboard(data)
 
@@ -46,6 +47,7 @@ def exploration_page(data: pd.DataFrame) -> None:
         "son historique de retards et d’annulations."
     )
     st.caption("Source : SNCF Open Data · Régularité mensuelle TGV (AQST)")
+    st.divider()
 
     ### sidebar ###
     selection = date_itinerary_sidebar(data)
@@ -68,6 +70,7 @@ def comparison_page(data: pd.DataFrame) -> None:
         "Comparez la régularité des liaisons et des gares "
         "sur une même période historique."
     )
+    st.divider()
     # sidebar to select what to show
     # returns type of comparison, metric, top_n, min_volume
     # for more details check in sidebar.py
@@ -86,8 +89,12 @@ def methods_page() -> None:
         "Source : SNCF Open Data · Régularité mensuelle TGV (AQST) · "
         "Méthode documentée dans le notebook EDA"
     )
+    st.divider()
 
     render_data_source_dashboard()
+    st.divider()
     render_cleaning_dashboard()
+    st.divider()
     render_quality_dashboard()
+    st.divider()
     render_methodology_dashboard()
