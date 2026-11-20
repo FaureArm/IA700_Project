@@ -6,8 +6,10 @@ import streamlit as st
 from ia700_project.cleaning import (
     convert_dates,
     drop_empty_columns,
+    fix_average_delays,
     fix_cause_percentages,
     fix_postcovid_anomalies,
+    fix_precovid_anomalies,
     merge_duplicate_pairs,
     percentage_causes,
 )
@@ -349,10 +351,8 @@ def render_comparison_time_evolution(
 
 
 ### METHODS PAGE ###
-# to make things simpler, we avoid calculating from
-# our dataset and instead simply use hardcoded values
-# this gives us more control and makes handling the
-# 'data' for this page much easier
+# Reference figures describe the studied export, not the loaded dataset.
+# Fictional examples use the same cleaning functions as the application.
 
 
 def render_data_source_dashboard() -> None:
@@ -388,7 +388,8 @@ def render_data_source_dashboard() -> None:
                     "Famille": [
                         "Repérage",
                         "Volumes",
-                        "Durées et retards",
+                        "Durée du trajet",
+                        "Retards moyens",
                         "Causes des retards",
                         "Commentaires",
                     ],
@@ -396,7 +397,11 @@ def render_data_source_dashboard() -> None:
                         "Mois, gare de départ, gare d’arrivée, service",
                         "Trains prévus, annulés, en retard ; "
                         "seuils 15/30/60 min",
-                        "Durée du trajet et retards moyens, en minutes",
+                        "Durée moyenne de la liaison, en minutes",
+                        "Retards moyens au départ et à l’arrivée, pour "
+                        "les trains retardés ou l’ensemble des trains ; "
+                        "moyenne > 15 min sur les liaisons concurrencées "
+                        "par l’avion",
                         "Six parts en % : externe, infrastructure, trafic, "
                         "matériel, gare, voyageurs",
                         "Texte explicatif lorsqu’il est renseigné",
@@ -463,6 +468,51 @@ def render_cleaning_example() -> None:
         "SNCF et ne contribuent pas aux indicateurs. « — » signifie manquant."
     )
     examples = build_cleaning_examples()
+
+    # Extend the existing fictional inputs without loading the SNCF export.
+    examples["Compteurs avant COVID"] = (
+        examples["Structure et dates"]
+        .iloc[:1]
+        .assign(
+            date="2019-01",
+            nb_train_retard_arrivee=5,
+            nb_train_retard_sup_15=8,
+            nb_train_retard_sup_30=3,
+            nb_train_retard_sup_60=1,
+        )
+    )
+    average_example = (
+        examples["Structure et dates"]
+        .iloc[:1]
+        .assign(
+            retard_moyen_depart=10.0,
+            retard_moyen_tous_trains_depart=2.0,
+            retard_moyen_arrivee=20.0,
+            retard_moyen_tous_trains_arrivee=4.0,
+            retard_moyen_trains_retard_sup15=25.0,
+        )
+    )
+    examples["Moyennes de retard"] = pd.concat(
+        [average_example] * 3, ignore_index=True
+    ).assign(
+        gare_depart=["Moyenne négative", "Zéro avec retards", "Cas cohérent"],
+        retard_moyen_arrivee=[-5.0, 0.0, 20.0],
+        retard_moyen_tous_trains_arrivee=[-1.0, 0.0, 4.0],
+    )
+    examples["Moyenne des retards > 15 min"] = pd.concat(
+        [average_example] * 4, ignore_index=True
+    ).assign(
+        gare_depart=[
+            "Sous le seuil",
+            "Aucun train > 15 min",
+            "Cas cohérent",
+            "Compteur inconnu",
+        ],
+        nb_train_retard_sup_15=[5.0, 0.0, 5.0, float("nan")],
+        nb_train_retard_sup_30=[3, 0, 3, 3],
+        nb_train_retard_sup_60=[1, 0, 1, 1],
+        retard_moyen_trains_retard_sup15=[6.0, 7.0, 25.0, 6.0],
+    )
     example = st.selectbox(
         "Transformation à observer", list(examples), key="methods_example"
     )
@@ -512,6 +562,47 @@ def render_cleaning_example() -> None:
             "> 60 min dépasse celui > 30 min, celui > 30 min est rendu "
             "manquant. La vraie valeur reste inconnue."
         )
+    elif example == "Compteurs avant COVID":
+        before = convert_dates(before)
+        after = fix_precovid_anomalies(before)
+        columns = ["date", "nb_train_retard_arrivee", "nb_train_retard_sup_15"]
+        st.write(
+            "Avant mars 2020, lorsque le compteur > 15 min dépasse "
+            "le total des retards à l’arrivée, ce total est porté au "
+            "niveau du compteur > 15 min. Ici, 5 devient 8 ; "
+            "le compteur > 15 min reste inchangé."
+        )
+    elif example == "Moyennes de retard":
+        before = convert_dates(before)
+        after = fix_average_delays(before)
+        columns = [
+            "gare_depart",
+            "nb_train_retard_arrivee",
+            "retard_moyen_arrivee",
+            "retard_moyen_tous_trains_arrivee",
+        ]
+        st.write(
+            "Les moyennes négatives deviennent manquantes. Les moyennes "
+            "nulles deviennent aussi manquantes lorsque le compteur "
+            "correspondant indique des trains retardés. La même règle "
+            "est appliquée au départ et à l’arrivée, aux trains retardés "
+            "comme à l’ensemble des trains."
+        )
+    elif example == "Moyenne des retards > 15 min":
+        before = convert_dates(before)
+        after = fix_average_delays(before)
+        columns = [
+            "gare_depart",
+            "nb_train_retard_sup_15",
+            "retard_moyen_trains_retard_sup15",
+        ]
+        st.write(
+            "Si le compteur > 15 min est positif, une moyenne inférieure "
+            "à 15 devient 15. Si ce compteur vaut zéro, la moyenne devient "
+            "zéro. Si le compteur est inconnu, cette règle ne modifie pas "
+            "la moyenne. Le seuil de 15 est un ajustement imposé, "
+            "pas une reconstitution du retard réel."
+        )
     else:
         before = convert_dates(before)
         after = fix_cause_percentages(before)
@@ -532,6 +623,8 @@ def render_cleaning_example() -> None:
         "nb_train_prevu": "Trains prévus",
         "nb_train_retard_arrivee": "Trains en retard",
         "retard_moyen_arrivee": "Retard moyen (min)",
+        "retard_moyen_tous_trains_arrivee": "Moyenne tous trains (min)",
+        "retard_moyen_trains_retard_sup15": "Moyenne > 15 min (min)",
         "nb_train_retard_sup_15": "> 15 min",
         "nb_train_retard_sup_30": "> 30 min",
         "nb_train_retard_sup_60": "> 60 min",
@@ -566,10 +659,14 @@ def render_quality_dashboard() -> None:
         "annulations ne dépassent pas les trains prévus et que les retards "
         "ne dépassent pas les trains ayant circulé. Les seuils doivent "
         "s’emboîter : > 60 min ≤ > 30 min ≤ > 15 min ≤ retards à l’arrivée. "
-        "La durée moyenne du trajet doit être strictement positive."
+        "La durée moyenne du trajet doit être strictement positive. "
+        "Le traitement contrôle aussi les moyennes négatives, les "
+        "moyennes nulles associées à des trains retardés et les moyennes "
+        "du champ > 15 min inférieures à ce seuil."
     )
     st.caption(
-        "Constats du notebook EDA, après fusion des doublons et avant "
+        "Bilan des contrôles sur l’export de référence, après fusion "
+        "des doublons et avant "
         "traitement des anomalies. Une ligne peut enfreindre plusieurs "
         "règles : les nombres ci-dessous ne s’additionnent pas en un "
         "nombre de lignes distinctes."
@@ -588,8 +685,26 @@ def render_quality_dashboard() -> None:
                         "> 30 min > > 15 min",
                         "> 60 min > > 30 min",
                         "Durée moyenne nulle ou négative",
+                        "Au moins une moyenne de retard négative",
+                        "Moyenne des trains retardés nulle avec retards",
+                        "Moyenne tous trains nulle avec retards",
+                        "Moyenne > 15 min sous le seuil (zéros inclus)",
                     ],
-                    "Lignes concernées": [43, 73, 63, 64, 63, 31, 3, 354, 73],
+                    "Lignes concernées": [
+                        43,
+                        73,
+                        63,
+                        64,
+                        63,
+                        31,
+                        3,
+                        354,
+                        73,
+                        277,
+                        38,
+                        1,
+                        2174,
+                    ],
                 }
             ),
             hide_index=True,
@@ -601,23 +716,24 @@ def render_quality_dashboard() -> None:
             "Les 73 lignes sans train prévu sont conservées pour documenter "
             "cette période ; elles sont exclues des calculs de taux. "
             "Le nettoyage ne supprime pas les observations exceptionnelles "
-            "et ne résout pas toutes les incohérences : chaque indicateur "
-            "écarte aussi les compteurs incompatibles avec son calcul."
+            "et ne résout pas toutes les incohérences : les calculs de "
+            "taux écartent les volumes incompatibles avec leur définition."
         )
 
-    with st.expander("Avant COVID : mesurer l’effet avant de corriger"):
+    with st.expander("Avant COVID : ajuster les compteurs d’arrivée"):
         st.write(
             "Sur 13 lignes de 2018–2019, le compteur > 15 min dépasse "
-            "le total des retards à l’arrivée. Le notebook teste le "
-            "remplacement hypothétique de ce total par le compteur > 15 min."
+            "le total des retards à l’arrivée. Le nettoyage porte "
+            "ce total au niveau du compteur > 15 min. Cette règle "
+            "s’applique aux observations antérieures à mars 2020."
         )
         before, after = st.columns(2)
         before.metric("Taux national sans correction", "14,6583 %")
-        after.metric("Avec correction hypothétique", "14,6595 %")
+        after.metric("Taux national après ajustement", "14,6595 %")
         st.write(
             "L’écart est de 0,0012 point de pourcentage sur l’export étudié. "
-            "Ce test de sensibilité ne modifie pas le jeu de données : "
-            "les valeurs originales sont conservées."
+            "Le test de sensibilité mesure cet effet avant que "
+            "l’ajustement soit effectivement appliqué au jeu nettoyé."
         )
 
     with st.expander("2025 : rendre manquants les compteurs irrécupérables"):
@@ -640,6 +756,38 @@ def render_quality_dashboard() -> None:
             "(83 lignes). Les 7 répartitions partielles proches de 100 % "
             "sont conservées sans renormalisation, pour ne pas attribuer "
             "une cause aux trains non classés."
+        )
+
+    with st.expander("Moyennes de retard : traiter les valeurs aberrantes"):
+        st.write(
+            "Pour les moyennes au départ et à l’arrivée, sur les trains "
+            "retardés ou sur tous les trains, le nettoyage remplace les "
+            "valeurs négatives par des valeurs manquantes. Il fait de "
+            "même pour une moyenne nulle si le compteur correspondant "
+            "indique au moins un train retardé. Sur l’export étudié, "
+            "cela rend manquantes 40 moyennes des trains retardés "
+            "à l’arrivée : 2 négatives et 38 nulles malgré des retards."
+        )
+        st.write(
+            "Le champ de moyenne des retards > 15 min suit une autre "
+            "règle : si le compteur > 15 min est positif, une moyenne "
+            "inférieure à 15 est portée à 15 ; si ce compteur vaut zéro, "
+            "la moyenne est fixée à zéro. Un compteur manquant ne "
+            "déclenche aucun de ces deux ajustements."
+        )
+        st.caption(
+            "Sur l’export de référence : 1 952 moyennes portées à 15 min "
+            "et 16 remises à zéro. Le contrôle initial signale 2 174 "
+            "moyennes sous 15 min, y compris des zéros sans train "
+            "retardé au-delà de ce seuil : ce nombre ne représente "
+            "donc pas le nombre de valeurs portées à 15."
+        )
+        st.write(
+            "Le seuil imposé de 15 min ne restitue pas la moyenne réelle. "
+            "Ce champ n’entre pas dans les indicateurs affichés. Pour "
+            "le retard moyen à l’arrivée, les mois dont la moyenne est "
+            "manquante sont exclus du calcul, ainsi que leurs poids. "
+            "Le taux de retard peut rester disponible sur ces mêmes mois."
         )
 
 
@@ -701,8 +849,8 @@ def render_methodology_dashboard() -> None:
         st.write(
             "La présence d’un commentaire ne sert pas d’indicateur de "
             "fiabilité. Le champ de retard moyen des trains > 15 min "
-            "n’est pas utilisé dans les indicateurs : sa signification "
-            "est incertaine et certaines valeurs sont inférieures à "
-            "15 minutes. La répartition déclarée des causes ne suffit "
+            "est distinct du retard moyen à l’arrivée affiché : "
+            "ses ajustements à 15 min ou à zéro n’entrent pas dans "
+            "les indicateurs. La répartition déclarée des causes ne suffit "
             "pas à établir une relation de causalité."
         )
