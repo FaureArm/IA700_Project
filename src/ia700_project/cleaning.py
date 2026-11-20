@@ -47,6 +47,14 @@ percentage_causes = [
     "prct_cause_prise_en_charge_voyageurs",
 ]
 
+mean_delay_cols = [
+    "retard_moyen_depart",
+    "retard_moyen_tous_trains_depart",
+    "retard_moyen_arrivee",
+    "retard_moyen_tous_trains_arrivee",
+    "retard_moyen_trains_retard_sup15",
+]
+
 comment_col = "commentaires_retard_arrivee"
 
 conversion_col_names = {
@@ -258,7 +266,9 @@ def _build_check_masks(df: pd.DataFrame) -> dict[str, pd.Series]:
         Dict mapping rule names to boolean mask Series.
     """
     trains_operated = df["nb_train_prevu"] - df["nb_annulation"]
-
+    # Trains that departed / arrived late.
+    dep_delayed = df["nb_train_depart_retard"] > 0
+    arr_delayed = df["nb_train_retard_arrivee"] > 0
     return {
         # Counters can only add up, never go negative.
         "negative counter": (df[counter_cols] < 0).any(axis=1),
@@ -290,6 +300,24 @@ def _build_check_masks(df: pd.DataFrame) -> dict[str, pd.Series]:
         ),
         # An average journey duration is strictly positive.
         "zero or negative average duration": df["duree_moyenne"] <= 0,
+        # An average delay can never be negative.
+        "negative average delays": (df[mean_delay_cols] < 0).any(axis=1),
+        # The mean delay of delayed trains cannot be 0
+        # when trains were actually delayed.
+        "zero delayed-train average with delays": (
+            (dep_delayed & (df["retard_moyen_depart"] == 0))
+            | (arr_delayed & (df["retard_moyen_arrivee"] == 0))
+        ),
+        # Same constraint on the all-train averages.
+        "zero all-train average with delays": (
+            (dep_delayed & (df["retard_moyen_tous_trains_depart"] == 0))
+            | (arr_delayed & (df["retard_moyen_tous_trains_arrivee"] == 0))
+        ),
+        # The mean delay of trains late > 15 min
+        # cannot be below 15 min.
+        "(mean delay >15min) < 15min": (
+            df["retard_moyen_trains_retard_sup15"] < 15
+        ),
     }
 
 
@@ -313,6 +341,27 @@ def consistency_checks(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     return results
+
+
+def fix_precovid_anomalies(df: pd.DataFrame) -> pd.DataFrame:
+    """Correct the pre-COVID sup_15 > arrivee counter anomalies.
+
+    Args:
+        df: Data
+
+    Returns:
+        Copy of df with the arrival-delay counter corrected.
+    """
+    df = df.copy()
+    sup_15 = df["nb_train_retard_sup_15"]
+    delayed = df["nb_train_retard_arrivee"]
+    mask_precovid = (sup_15 > delayed) & (df["date"] < covid_start)
+    df.loc[mask_precovid, "nb_train_retard_arrivee"] = sup_15[mask_precovid]
+    logger.info(
+        "Pre-COVID fixes: %d arrival counters corrected",
+        int(mask_precovid.sum()),
+    )
+    return df
 
 
 def precovid_sensitivity(df: pd.DataFrame) -> pd.DataFrame:
@@ -422,6 +471,67 @@ def fix_cause_percentages(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def fix_average_delays(df: pd.DataFrame) -> pd.DataFrame:
+    """Fix the impossible average delay values.
+
+    Delayed-train and all-train means: negative values, and zero
+    values recorded while trains were delayed, are unrecoverable
+    and set to NaN. Mean delay of the trains late > 15 min:
+    values below 15 min are floored to the admissible minimum
+    15, and when no train was late > 15 min the mean is set to 0.
+
+    Args:
+        df: Data
+
+    Returns:
+        Copy of df with the average delay columns fixed
+    """
+    df = df.copy()
+    dep_delayed = df["nb_train_depart_retard"] > 0
+    arr_delayed = df["nb_train_retard_arrivee"] > 0
+
+    delayed_by_column = {
+        "retard_moyen_depart": dep_delayed,
+        "retard_moyen_tous_trains_depart": dep_delayed,
+        "retard_moyen_arrivee": arr_delayed,
+        "retard_moyen_tous_trains_arrivee": arr_delayed,
+    }
+    nan_count = 0
+    # Fix negative or zero mean delay while there are delays
+    for column, delayed in delayed_by_column.items():
+        mask_aberrant_mean = (df[column] < 0) | (delayed & (df[column] == 0))
+        df.loc[mask_aberrant_mean, column] = np.nan
+        nan_count += int(mask_aberrant_mean.sum())
+
+    # Fix mean delay of the trains late > 15 min.
+
+    sup15_counter = pd.to_numeric(
+        df["nb_train_retard_sup_15"], errors="coerce"
+    )
+    sup15_late = sup15_counter > 0
+    sup15_missing = sup15_counter == 0
+
+    # Trains were late below 15 min: floor to the admissible minimum.
+    mask_sup15_floor = sup15_late & (
+        df["retard_moyen_trains_retard_sup15"] < 15
+    )
+    df.loc[mask_sup15_floor, "retard_moyen_trains_retard_sup15"] = 15
+
+    # No train late below 15 min, set mean to 0
+    mask_sup15_missing = sup15_missing & (
+        df["retard_moyen_trains_retard_sup15"] != 0
+    )
+    df.loc[mask_sup15_missing, "retard_moyen_trains_retard_sup15"] = 0
+    logger.info(
+        "Average delay fixes: %d means set to NaN, "
+        "%d sup15 means floored to 15, %d sup15 means set to 0",
+        nan_count,
+        int(mask_sup15_floor.sum()),
+        int(mask_sup15_missing.sum()),
+    )
+    return df
+
+
 def clean_dataset(
     csv_path: str | Path,
     output_path: str | Path | None = None,
@@ -450,10 +560,10 @@ def clean_dataset(
 
     sensitivity = precovid_sensitivity(df)
     logger.info("Pre-COVID sensitivity:\n%s", sensitivity.to_string())
-
+    df = fix_precovid_anomalies(df)
     df = fix_postcovid_anomalies(df)
     df = fix_cause_percentages(df)
-
+    df = fix_average_delays(df)
     logger.info("Cleaned data: %d rows, %d columns", *df.shape)
 
     if output_path is not None:

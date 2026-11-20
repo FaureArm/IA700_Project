@@ -45,15 +45,7 @@ ZERO_CAUSES = {column: 0.0 for column in cleaning.percentage_causes}
 def make_df(
     rows: list[dict] | None = None, with_empty: bool = False
 ) -> pd.DataFrame:
-    """Build a raw-like DataFrame from the base row plus overrides.
-
-    Args:
-        rows: One dict of overrides per row (``[{}]`` gives one base row).
-        with_empty: Keep the two columns that are empty in the raw export.
-
-    Returns:
-        DataFrame using the technical column ids.
-    """
+    """Build a raw-like DataFrame from the base row plus overrides."""
     rows = rows if rows is not None else [{}]
     df = pd.DataFrame([{**BASE_ROW, **row} for row in rows])
     if not with_empty:
@@ -294,6 +286,7 @@ def test_merge_duplicate_pairs_without_duplicates_changes_nothing():
 
 # ---- consistency_checks ----
 
+
 VIOLATIONS = [
     ("negative counter", {"nb_annulation": -1}),
     ("zero scheduled trains", {"nb_train_prevu": 0}),
@@ -304,6 +297,16 @@ VIOLATIONS = [
     ("(delays >30min) > delays >15min", {"nb_train_retard_sup_30": 21}),
     ("(delays >60min) > delays >30min", {"nb_train_retard_sup_60": 11}),
     ("zero or negative average duration", {"duree_moyenne": 0}),
+    ("negative average delays", {"retard_moyen_depart": -1}),
+    ("zero delayed-train average with delays", {"retard_moyen_depart": 0}),
+    (
+        "zero all-train average with delays",
+        {"retard_moyen_tous_trains_depart": 0},
+    ),
+    (
+        "(mean delay >15min) < 15min",
+        {"retard_moyen_trains_retard_sup15": 14},
+    ),
 ]
 
 
@@ -320,7 +323,7 @@ def test_consistency_checks_reports_nothing_on_consistent_data():
 )
 def test_consistency_checks_counts_violating_rows(rule, override):
     """Each rule counts exactly the one row that breaks it."""
-    df = make_df([{}, override])  # one consistent row, one broken row
+    df = make_df([{}, override])
 
     checks = cleaning.consistency_checks(df)
 
@@ -334,7 +337,6 @@ def test_precovid_sensitivity_corrects_precovid_anomalies():
     """The correction raises the delay rate when anomalies exist."""
     df = make_df(
         [
-            # anomaly: more ">15 min" delays (20) than arrival delays (10)
             {
                 "date": "2019-01",
                 "nb_annulation": 0,
@@ -374,6 +376,51 @@ def test_precovid_sensitivity_ignores_rows_after_covid_start():
     assert result["delay_rate_pct"].tolist() == pytest.approx([10.0, 10.0])
 
 
+# ---- fix_precovid_anomalies ----
+
+
+def test_fix_precovid_anomalies_corrects_only_pre_covid_rows():
+    """Only pre-COVID arrival counters are corrected."""
+    df = make_df(
+        [
+            {
+                "date": "2019-01",
+                "nb_train_retard_arrivee": 10,
+                "nb_train_retard_sup_15": 20,
+            },
+            {
+                "date": "2024-01",
+                "nb_train_retard_arrivee": 10,
+                "nb_train_retard_sup_15": 20,
+            },
+        ]
+    )
+    df = cleaning.convert_dates(df)
+
+    result = cleaning.fix_precovid_anomalies(df)
+
+    assert result.loc[0, "nb_train_retard_arrivee"] == 20
+    assert result.loc[1, "nb_train_retard_arrivee"] == 10
+
+
+def test_fix_precovid_anomalies_does_not_modify_input():
+    """The original DataFrame remains unchanged."""
+    df = make_df(
+        [
+            {
+                "date": "2019-01",
+                "nb_train_retard_arrivee": 10,
+                "nb_train_retard_sup_15": 20,
+            }
+        ]
+    )
+    df = cleaning.convert_dates(df)
+
+    cleaning.fix_precovid_anomalies(df)
+
+    assert df.loc[0, "nb_train_retard_arrivee"] == 10
+
+
 # ---- fix_postcovid_anomalies ----
 
 
@@ -384,9 +431,9 @@ def anomalous_counters() -> pd.DataFrame:
         [
             # 2025 row with sup_30 (25) > sup_15 (20): sup_15 is unknown
             {"date": "2025-02", "nb_train_retard_sup_30": 25},
-            # the same issue before 2025 is left untouched
+            # The same issue before 2025 is left untouched.
             {"date": "2024-02", "nb_train_retard_sup_30": 25},
-            # sup_60 (12) > sup_30 (10): sup_30 is unknown, whatever the date
+            # sup_60 (12) > sup_30 (10): sup_30 is unknown, whatever the date.
             {"date": "2023-05", "nb_train_retard_sup_60": 12},
             {"date": "2023-06"},
         ]
@@ -400,6 +447,7 @@ def test_fix_postcovid_anomalies_blanks_sup_15_in_2025(anomalous_counters):
 
     flagged = result[result["date"] == pd.Timestamp("2025-02")]
     untouched = result[result["date"] == pd.Timestamp("2024-02")]
+
     assert flagged["nb_train_retard_sup_15"].isna().all()
     assert untouched["nb_train_retard_sup_15"].notna().all()
 
@@ -412,6 +460,7 @@ def test_fix_postcovid_anomalies_blanks_sup_30_when_sup_60_is_larger(
 
     assert result["nb_train_retard_sup_30"].isna().sum() == 1
     flagged = result[result["date"] == pd.Timestamp("2023-05")]
+
     assert flagged["nb_train_retard_sup_30"].isna().all()
 
 
@@ -430,14 +479,14 @@ def test_fix_cause_percentages_blanks_only_unusable_breakdowns():
     """Only unusable breakdowns are set to NaN."""
     df = make_df(
         [
-            {},  # complete breakdown (sums to 100)
+            {},  # Complete breakdown (sums to 100).
             {
                 **ZERO_CAUSES,
                 "nb_train_retard_arrivee": 0,
-            },  # no delay, no cause
-            {**ZERO_CAUSES},  # delays but no cause at all
-            {**ZERO_CAUSES, "prct_cause_externe": 50.0},  # partial, below 90
-            {**ZERO_CAUSES, "prct_cause_externe": 95.0},  # partial, kept
+            },  # No delay, no cause.
+            {**ZERO_CAUSES},  # Delays but no cause at all.
+            {**ZERO_CAUSES, "prct_cause_externe": 50.0},
+            {**ZERO_CAUSES, "prct_cause_externe": 95.0},
         ]
     )
 
@@ -452,6 +501,83 @@ def test_fix_cause_percentages_keeps_complete_breakdown_values():
     result = cleaning.fix_cause_percentages(make_df())
 
     assert result[cleaning.percentage_causes].iloc[0].sum() == 100.0
+
+
+# ---- fix_average_delays ----
+
+
+def test_fix_average_delays_blanks_negative_and_zero_means():
+    """Unrecoverable average delays are set to NaN."""
+    df = make_df(
+        [
+            {
+                "retard_moyen_depart": -1,
+                "retard_moyen_tous_trains_depart": 0,
+                "retard_moyen_arrivee": -2,
+                "retard_moyen_tous_trains_arrivee": 0,
+            }
+        ]
+    )
+
+    result = cleaning.fix_average_delays(df)
+
+    columns = [
+        "retard_moyen_depart",
+        "retard_moyen_tous_trains_depart",
+        "retard_moyen_arrivee",
+        "retard_moyen_tous_trains_arrivee",
+    ]
+
+    assert result[columns].isna().all().all()
+
+
+def test_fix_average_delays_floors_sup15_mean_to_15():
+    """The mean delay for trains late over 15 minutes cannot be below 15."""
+    df = make_df(
+        [
+            {
+                "nb_train_retard_sup_15": 10,
+                "retard_moyen_trains_retard_sup15": 12,
+            }
+        ]
+    )
+
+    result = cleaning.fix_average_delays(df)
+
+    assert result.loc[0, "retard_moyen_trains_retard_sup15"] == 15
+
+
+def test_fix_average_delays_sets_sup15_mean_to_zero_without_delays():
+    """The sup15 mean is zero when no train exceeded 15 minutes."""
+    df = make_df(
+        [
+            {
+                "nb_train_retard_sup_15": 0,
+                "retard_moyen_trains_retard_sup15": 35,
+            }
+        ]
+    )
+
+    result = cleaning.fix_average_delays(df)
+
+    assert result.loc[0, "retard_moyen_trains_retard_sup15"] == 0
+
+
+def test_fix_average_delays_does_not_modify_input():
+    """The original DataFrame remains unchanged."""
+    df = make_df(
+        [
+            {
+                "retard_moyen_depart": -1,
+                "retard_moyen_trains_retard_sup15": 12,
+            }
+        ]
+    )
+
+    cleaning.fix_average_delays(df)
+
+    assert df.loc[0, "retard_moyen_depart"] == -1
+    assert df.loc[0, "retard_moyen_trains_retard_sup15"] == 12
 
 
 # ---- clean_dataset ----

@@ -5,10 +5,10 @@ import json
 from pathlib import Path
 from zlib import error as ZlibError
 
+import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
-from ia700_project.data import DATA_PATH
 from ia700_project.map_rates import load_map_rates
 from ia700_project.sidebar import map_metric_sidebar, map_route_sidebar
 
@@ -151,7 +151,7 @@ def render_rate_legend(
     )
 
 
-def render_tgv_map() -> None:
+def render_tgv_map(data: pd.DataFrame) -> None:
     """Join the saved paths to their AQST rates and draw the overview map."""
     ## Load the prepared map ##
     # NB: Streamlit reads the map build output here
@@ -171,7 +171,7 @@ def render_tgv_map() -> None:
         return
 
     st.caption(
-        "Tracés reconstitués. "
+        "Tracés reconstitués par Codex. "
         "Sources: SNCF, Train Nomade, OpenStreetMap, IGN Espagne et ERA."
     )
 
@@ -184,10 +184,7 @@ def render_tgv_map() -> None:
         }
     )
     try:
-        rates = load_map_rates(
-            str(DATA_PATH),
-            DATA_PATH.stat().st_mtime_ns,
-        )
+        rates = load_map_rates(data)
     except (OSError, ValueError):
         rates = {}
     # we use the same stations label for the map as the CSV

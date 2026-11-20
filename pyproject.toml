@@ -46,19 +46,15 @@ convention = "google"
 
 [tool.pytest.ini_options]
 testpaths = ["unit_tests"]
-addopts = [
-    "--cov=ia700_project.analysis",
-    "--cov=ia700_project.cleaning",
-    "--cov=ia700_project.routes_metrics",
+addopts = [    
+    "--cov=ia700_project.cleaning",    
     "--cov=ia700_project.dashboards",
     "--cov=ia700_project.map_rates",
     "--cov=ia700_project.map_view",
     "--cov=ia700_project.sidebar",
     "--cov=ia700_project.indicators",
-    "--cov=ia700_project.data",
-    "--cov=ia700_project.download_data",
-    "--cov=ia700_project.models",
-    "--cov=ia700_project.constants",
+    "--cov=ia700_project.data",    
+    "--cov=ia700_project.models",    
     "--cov=ia700_project.pages",
     "--cov=ia700_project.streamlit_app",
     "--cov-report=term-missing",
