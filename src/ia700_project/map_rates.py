@@ -5,6 +5,7 @@ import streamlit as st
 
 ARRIVAL_DELAY_COUNT = "nb_train_retard_arrivee"
 
+
 def aggregate_map_rates(
     rows: pd.DataFrame,
 ) -> dict[tuple[str, str], dict[str, float]]:
@@ -38,9 +39,7 @@ def aggregate_map_rates(
             cancelled = valid_delays["nb_annulation"].sum()
             delayed = valid_delays[ARRIVAL_DELAY_COUNT].sum()
 
-            rates["disruption"] = float(
-                (delayed + cancelled) / planned
-            )
+            rates["disruption"] = float((delayed + cancelled) / planned)
 
             if planned > cancelled:
                 rates["delay"] = float(delayed / (planned - cancelled))
@@ -48,6 +47,7 @@ def aggregate_map_rates(
         result[departure, arrival] = rates
 
     return result
+
 
 @st.cache_data(show_spinner=False)
 def load_map_rates(

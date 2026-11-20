@@ -5,7 +5,20 @@ import json
 from contextlib import nullcontext
 from types import SimpleNamespace
 
+import pandas as pd
+
 from ia700_project import map_view
+
+
+def _prepare_map_directory(monkeypatch, tmp_path):
+    """Prepare a temporary map directory with the expected files."""
+    map_dir = tmp_path / "map"
+    map_dir.mkdir()
+
+    (map_dir / "liaisons.geojson.gz").touch()
+    (map_dir / "report.json").touch()
+
+    monkeypatch.setattr(map_view, "MAP_DATA", map_dir)
 
 
 def test_load_map_data_reads_and_decompresses_geojson(tmp_path) -> None:
@@ -233,8 +246,10 @@ def test_render_rate_legend_with_rates(monkeypatch) -> None:
     assert "données indisponibles" in html_content[0]
 
 
-def test_render_tgv_map_handles_missing_files(monkeypatch) -> None:
+def test_render_tgv_map_handles_missing_files(monkeypatch, tmp_path) -> None:
     """Check that missing map files display an information message."""
+    _prepare_map_directory(monkeypatch, tmp_path)
+
     messages = []
 
     def raise_missing_file(*args, **kwargs):
@@ -251,13 +266,17 @@ def test_render_tgv_map_handles_missing_files(monkeypatch) -> None:
         lambda message: messages.append(message),
     )
 
-    map_view.render_tgv_map()
+    map_view.render_tgv_map(pd.DataFrame())
 
     assert messages == ["Données de la carte absentes."]
 
 
-def test_render_tgv_map_handles_unreadable_files(monkeypatch) -> None:
+def test_render_tgv_map_handles_unreadable_files(
+    monkeypatch, tmp_path
+) -> None:
     """Check that unreadable map files display a warning."""
+    _prepare_map_directory(monkeypatch, tmp_path)
+
     messages = []
 
     def raise_invalid_data(*args, **kwargs):
@@ -274,13 +293,15 @@ def test_render_tgv_map_handles_unreadable_files(monkeypatch) -> None:
         lambda message: messages.append(message),
     )
 
-    map_view.render_tgv_map()
+    map_view.render_tgv_map(pd.DataFrame())
 
     assert messages == ["Données de la carte illisibles."]
 
 
-def test_render_tgv_map_returns_when_no_routes(monkeypatch) -> None:
+def test_render_tgv_map_returns_when_no_routes(monkeypatch, tmp_path) -> None:
     """Check that map rendering stops when there are no routes."""
+    _prepare_map_directory(monkeypatch, tmp_path)
+
     messages = []
 
     monkeypatch.setattr(
@@ -294,13 +315,15 @@ def test_render_tgv_map_returns_when_no_routes(monkeypatch) -> None:
         lambda message: messages.append(message),
     )
 
-    map_view.render_tgv_map()
+    map_view.render_tgv_map(pd.DataFrame())
 
     assert messages == []
 
 
 def test_render_tgv_map_draws_routes(monkeypatch, tmp_path) -> None:
     """Check that routes are prepared and rendered with Pydeck."""
+    _prepare_map_directory(monkeypatch, tmp_path)
+
     routes = [
         {
             "route_id": "route_1",
@@ -316,11 +339,6 @@ def test_render_tgv_map_draws_routes(monkeypatch, tmp_path) -> None:
         },
     ]
     captured = {}
-
-    # Create a temporary file so DATA_PATH.stat() works in CI.
-    data_file = tmp_path / "data.csv"
-    data_file.write_text("test", encoding="utf-8")
-    monkeypatch.setattr(map_view, "DATA_PATH", data_file)
 
     monkeypatch.setattr(
         map_view,
@@ -411,7 +429,7 @@ def test_render_tgv_map_draws_routes(monkeypatch, tmp_path) -> None:
         lambda deck, **kwargs: captured.update(chart=(deck, kwargs)),
     )
 
-    map_view.render_tgv_map()
+    map_view.render_tgv_map(pd.DataFrame())
 
     assert captured["legend"] == (
         map_view.RATE_SCALES["delay"],
@@ -425,8 +443,12 @@ def test_render_tgv_map_draws_routes(monkeypatch, tmp_path) -> None:
     assert captured["chart"][1]["key"] == "tgv_map"
 
 
-def test_render_tgv_map_handles_rate_loading_error(monkeypatch) -> None:
+def test_render_tgv_map_handles_rate_loading_error(
+    monkeypatch, tmp_path
+) -> None:
     """Check that rendering continues when rate data cannot be loaded."""
+    _prepare_map_directory(monkeypatch, tmp_path)
+
     routes = [
         {
             "route_id": "route_1",
@@ -508,7 +530,7 @@ def test_render_tgv_map_handles_rate_loading_error(monkeypatch) -> None:
         lambda deck, **kwargs: captured.update(chart=(deck, kwargs)),
     )
 
-    map_view.render_tgv_map()
+    map_view.render_tgv_map(pd.DataFrame())
 
     assert captured["has_rates"] is False
     assert len(captured["deck"]["layers"][1].kwargs["data"]) == 1

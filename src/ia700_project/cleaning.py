@@ -68,11 +68,15 @@ conversion_col_names = {
     "Commentaire annulations": "commentaire_annulation",
     "Nombre de trains en retard au départ": "nb_train_depart_retard",
     "Retard moyen des trains en retard au départ": "retard_moyen_depart",
-    "Retard moyen de tous les trains au départ": ("retard_moyen_tous_trains_depart"),
+    "Retard moyen de tous les trains au départ": (
+        "retard_moyen_tous_trains_depart"
+    ),
     "Commentaire retards au départ": "commentaire_retards_depart",
     "Nombre de trains en retard à l'arrivée": "nb_train_retard_arrivee",
     "Retard moyen des trains en retard à l'arrivée": ("retard_moyen_arrivee"),
-    "Retard moyen de tous les trains à l'arrivée": ("retard_moyen_tous_trains_arrivee"),
+    "Retard moyen de tous les trains à l'arrivée": (
+        "retard_moyen_tous_trains_arrivee"
+    ),
     "Commentaire retards à l'arrivée": "commentaires_retard_arrivee",
     "Nombre trains en retard > 15min": "nb_train_retard_sup_15",
     (
@@ -311,7 +315,9 @@ def _build_check_masks(df: pd.DataFrame) -> dict[str, pd.Series]:
         ),
         # The mean delay of trains late > 15 min
         # cannot be below 15 min.
-        "(mean delay >15min) < 15min": (df["retard_moyen_trains_retard_sup15"] < 15),
+        "(mean delay >15min) < 15min": (
+            df["retard_moyen_trains_retard_sup15"] < 15
+        ),
     }
 
 
@@ -352,7 +358,8 @@ def fix_precovid_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     mask_precovid = (sup_15 > delayed) & (df["date"] < covid_start)
     df.loc[mask_precovid, "nb_train_retard_arrivee"] = sup_15[mask_precovid]
     logger.info(
-        "Pre-COVID fixes: %d arrival counters corrected", int(mask_precovid.sum())
+        "Pre-COVID fixes: %d arrival counters corrected",
+        int(mask_precovid.sum()),
     )
     return df
 
@@ -368,9 +375,9 @@ def precovid_sensitivity(df: pd.DataFrame) -> pd.DataFrame:
         after the hypothetical correction.
     """
     # Anomalous rows before the first lockdown.
-    mask_precovid = (df["nb_train_retard_sup_15"] > df["nb_train_retard_arrivee"]) & (
-        df["date"] < covid_start
-    )
+    mask_precovid = (
+        df["nb_train_retard_sup_15"] > df["nb_train_retard_arrivee"]
+    ) & (df["date"] < covid_start)
 
     # Hypothetical arrival counter on the anomalous rows.
     corrected = df["nb_train_retard_sup_15"].where(
@@ -378,7 +385,9 @@ def precovid_sensitivity(df: pd.DataFrame) -> pd.DataFrame:
         df["nb_train_retard_arrivee"],
     )
 
-    trains_operated = (df["nb_train_prevu"] - df["nb_annulation"]).clip(lower=0)
+    trains_operated = (df["nb_train_prevu"] - df["nb_annulation"]).clip(
+        lower=0
+    )
 
     # National delay rate in %, before and after the correction.
     before = round(
@@ -408,9 +417,9 @@ def fix_postcovid_anomalies(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     # sup_30 > sup_15 in 2025: hierarchy violation, value unknown.
-    mask_sup_15 = (df["nb_train_retard_sup_30"] > df["nb_train_retard_sup_15"]) & (
-        df["date"] >= post_covid
-    )
+    mask_sup_15 = (
+        df["nb_train_retard_sup_30"] > df["nb_train_retard_sup_15"]
+    ) & (df["date"] >= post_covid)
 
     df.loc[mask_sup_15, "nb_train_retard_sup_15"] = pd.NA
 
@@ -496,16 +505,22 @@ def fix_average_delays(df: pd.DataFrame) -> pd.DataFrame:
 
     # Fix mean delay of the trains late > 15 min.
 
-    sup15_counter = pd.to_numeric(df["nb_train_retard_sup_15"], errors="coerce")
+    sup15_counter = pd.to_numeric(
+        df["nb_train_retard_sup_15"], errors="coerce"
+    )
     sup15_late = sup15_counter > 0
     sup15_missing = sup15_counter == 0
 
     # Trains were late below 15 min: floor to the admissible minimum.
-    mask_sup15_floor = sup15_late & (df["retard_moyen_trains_retard_sup15"] < 15)
+    mask_sup15_floor = sup15_late & (
+        df["retard_moyen_trains_retard_sup15"] < 15
+    )
     df.loc[mask_sup15_floor, "retard_moyen_trains_retard_sup15"] = 15
 
     # No train late below 15 min, set mean to 0
-    mask_sup15_missing = sup15_missing & (df["retard_moyen_trains_retard_sup15"] != 0)
+    mask_sup15_missing = sup15_missing & (
+        df["retard_moyen_trains_retard_sup15"] != 0
+    )
     df.loc[mask_sup15_missing, "retard_moyen_trains_retard_sup15"] = 0
     logger.info(
         "Average delay fixes: %d means set to NaN, "
