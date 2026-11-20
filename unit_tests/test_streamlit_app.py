@@ -74,7 +74,7 @@ def test_main_success(monkeypatch, tmp_path):
     streamlit_app.main()
 
     streamlit_app.st.set_page_config.assert_called_once_with(
-        page_title="SNCF Regularity",
+        page_title="RailInsight · Régularité TGV",
         page_icon="🚆",
         layout="wide",
     )

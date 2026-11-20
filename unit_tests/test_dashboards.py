@@ -16,7 +16,7 @@ def mock_streamlit(monkeypatch):
     mock_st = MagicMock()
     created_columns = []
 
-    def create_columns(number):
+    def create_columns(number, **kwargs):
         columns = [MagicMock() for _ in range(number)]
         created_columns.append(columns)
         return columns

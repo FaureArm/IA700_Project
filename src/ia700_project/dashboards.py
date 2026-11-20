@@ -28,6 +28,10 @@ from ia700_project.map_view import render_tgv_map
 from ia700_project.methods_examples import build_cleaning_examples
 from ia700_project.models import ComparisonSelection, TravelSelection
 
+# Keep the same metric colours across the exploration charts.
+CANCELLATION_COLOR = "#971B4C"
+DELAY_COLOR = "#B97716"
+
 ### MAIN PAGE ###
 
 
@@ -51,7 +55,6 @@ def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
     """Display the dataset overview returned by the calculation."""
     route_count_label = "—"
     station_count_label = "—"
-    # latest_month_label = "—"
 
     if overview_summary is None:
         st.caption("Aucune donnée exploitable pour les indicateurs du réseau.")
@@ -67,12 +70,7 @@ def render_overview_metrics(overview_summary: pd.DataFrame | None) -> None:
             ",", " "
         )
 
-        # if pd.notna(summary["latest_month"]):
-        #     latest_month_label = pd.Timestamp(
-        #         summary["latest_month"]
-        #     ).strftime("%m/%Y")
-
-    routes_column, stations_column, latest_month_column = st.columns(3)
+    routes_column, stations_column = st.columns(2, border=True)
 
     routes_column.metric("Liaisons couvertes", route_count_label)
     stations_column.metric("Gares représentées", station_count_label)
@@ -141,7 +139,7 @@ def render_summary_metrics(
     delay_pct = delay_rate(data, selection)
     average_delay_minutes = avg_delay_length(data, selection)
 
-    volume, cancellations, delays, duration = st.columns(4)
+    volume, cancellations, delays, duration = st.columns(4, border=True)
     volume.metric(
         "Circulations prévues",
         f"{train_count:,}".replace(",", " ")
@@ -186,6 +184,7 @@ def render_exploration_time_evolution(
         ),
         x_label="Mois",
         y_label="Taux (%)",
+        color=[CANCELLATION_COLOR, DELAY_COLOR],
     )
 
     st.line_chart(
@@ -196,6 +195,7 @@ def render_exploration_time_evolution(
         ),
         x_label="Mois",
         y_label="Minutes",
+        color=DELAY_COLOR,
     )
 
 
@@ -247,7 +247,13 @@ def render_comparison_dashboard(
     render_comparison_time_evolution(monthly_history, selection)
 
     with st.expander("Comment lire cette comparaison ?"):
-        st.write("TODO")
+        st.write(
+            "Le classement porte sur l’historique disponible, avec le "
+            "volume minimal de circulations sélectionné. Les valeurs les "
+            "plus élevées apparaissent en premier. Chaque couleur de la "
+            "courbe représente une liaison ou une gare du classement ; "
+            "les indicateurs sont recalculés mois par mois."
+        )
 
 
 def render_ranking(
@@ -376,7 +382,7 @@ def render_data_source_dashboard() -> None:
         "regularite-mensuelle-tgv-aqst/information/)"
     )
 
-    raw, cleaned, routes = st.columns(3)
+    raw, cleaned, routes = st.columns(3, border=True)
     raw.metric("Avant préparation", "12 907 lignes")
     cleaned.metric("Après préparation", "12 865 lignes")
     routes.metric("Liaisons orientées", "130")
@@ -449,7 +455,7 @@ def render_cleaning_dashboard() -> None:
         "retardés pour le retard moyen et les causes. Les commentaires "
         "sont réunis."
     )
-    st.info(
+    st.write(
         "Les commentaires à l’arrivée sont conservés sans les compléter : "
         "698 textes, uniquement en 2018–2019, puis aucun à partir de 2020. "
         "Cette absence dépend de la période de publication ; un commentaire "
@@ -727,7 +733,7 @@ def render_quality_dashboard() -> None:
             "ce total au niveau du compteur > 15 min. Cette règle "
             "s’applique aux observations antérieures à mars 2020."
         )
-        before, after = st.columns(2)
+        before, after = st.columns(2, border=True)
         before.metric("Taux national sans correction", "14,6583 %")
         after.metric("Taux national après ajustement", "14,6595 %")
         st.write(
@@ -838,13 +844,15 @@ def render_methodology_dashboard() -> None:
             "ensuite chaque indicateur mois par mois."
         )
 
-    st.info(
-        "Ces données mensuelles décrivent un historique : elles ne "
-        "prédisent pas le retard d’un train précis et ne donnent pas "
-        "l’état du trafic en temps réel. Les mois atypiques restent "
-        "présents, les causes manquantes limitent leur interprétation "
-        "et la couverture des liaisons peut évoluer dans le temps."
-    )
+    with st.container(border=True):
+        st.markdown("**À garder en tête**")
+        st.write(
+            "Ces données mensuelles décrivent un historique : elles ne "
+            "prédisent pas le retard d’un train précis et ne donnent pas "
+            "l’état du trafic en temps réel. Les mois atypiques restent "
+            "présents, les causes manquantes limitent leur interprétation "
+            "et la couverture des liaisons peut évoluer dans le temps."
+        )
     with st.expander("Autres précautions de lecture"):
         st.write(
             "La présence d’un commentaire ne sert pas d’indicateur de "
