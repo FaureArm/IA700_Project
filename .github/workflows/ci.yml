@@ -32,50 +32,49 @@ jobs:
 
       - name: Run Ruff lint checks
         run: |
-          uv run ruff check \           
-            src/ia700_project/cleaning.py \           
+          uv run ruff check \
+            src/ia700_project/cleaning.py \
             src/ia700_project/dashboards.py \
             src/ia700_project/map_rates.py \
             src/ia700_project/map_view.py \
             src/ia700_project/sidebar.py \
             src/ia700_project/indicators.py \
-            src/ia700_project/data.py \            
-            src/ia700_project/models.py \            
+            src/ia700_project/data.py \
+            src/ia700_project/models.py \
             src/ia700_project/pages.py \
-            src/ia700_project/streamlit_app.py \            
-            unit_tests/test_cleaning.py \            
+            src/ia700_project/streamlit_app.py \
+            unit_tests/test_cleaning.py \
             unit_tests/test_dashboards.py \
             unit_tests/test_map_rates.py \
             unit_tests/test_map_view.py \
             unit_tests/test_sidebar.py \
             unit_tests/test_indicators.py \
-            unit_tests/test_data.py \           
-            unit_tests/test_models.py \            
+            unit_tests/test_data.py \
+            unit_tests/test_models.py \
             unit_tests/test_pages.py \
             unit_tests/test_streamlit_app.py
 
-
       - name: Check code formatting
         run: |
-          uv run ruff format --check \            
-            src/ia700_project/cleaning.py \            
+          uv run ruff format --check \
+            src/ia700_project/cleaning.py \
             src/ia700_project/dashboards.py \
             src/ia700_project/map_rates.py \
             src/ia700_project/map_view.py \
             src/ia700_project/sidebar.py \
             src/ia700_project/indicators.py \
-            src/ia700_project/data.py \            
-            src/ia700_project/models.py \            
+            src/ia700_project/data.py \
+            src/ia700_project/models.py \
             src/ia700_project/pages.py \
-            src/ia700_project/streamlit_app.py \            
-            unit_tests/test_cleaning.py \            
+            src/ia700_project/streamlit_app.py \
+            unit_tests/test_cleaning.py \
             unit_tests/test_dashboards.py \
             unit_tests/test_map_rates.py \
             unit_tests/test_map_view.py \
             unit_tests/test_sidebar.py \
             unit_tests/test_indicators.py \
-            unit_tests/test_data.py \         
-            unit_tests/test_models.py \            
+            unit_tests/test_data.py \
+            unit_tests/test_models.py \
             unit_tests/test_pages.py \
             unit_tests/test_streamlit_app.py
 
