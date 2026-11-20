@@ -21,6 +21,8 @@
   <a href="https://ressources.data.sncf.com/explore/dataset/regularite-mensuelle-tgv-aqst/information/">OFFICIAL SNCF DATASET</a>
   &nbsp; | &nbsp;
   <a href="datasheet.md">DATASET DATASHEET</a>
+  &nbsp; | &nbsp;
+  <a href="https://railnsight.streamlit.app/">ONLINE WEBSITE</a>
 </p>
 
 ---
@@ -195,6 +197,10 @@ The application is built around a Python-based data analytics stack.
 ---
 
 ## 06 | INSTALLATION & EXECUTION
+
+### Online Application
+
+Access the hosted application directly on Streamlit, without local installation: [Launch Railnsight](https://railnsight.streamlit.app/).
 
 ### Requirements
 
